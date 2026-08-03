@@ -1,2 +1,6 @@
 objs
 dep
+node_modules/
+package-lock.json
+.env
+*.log

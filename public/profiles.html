@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профили - LoveMatch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="logo">💕 LoveMatch</div>
+      <div class="nav-links">
+        <span id="username" class="username"></span>
+        <a href="#" id="likesBtn" class="btn-nav">❤️ Мне нравится</a>
+        <a href="/admin" class="btn-nav" id="adminBtn" style="display:none;">⚙️ Админ</a>
+        <a href="/api/logout" class="btn-nav">Выход</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="profiles-section">
+      <h2>Просмотр анкет</h2>
+
+      <div id="profilesList" class="profiles-grid">
+        <div class="loading">Загрузка профилей...</div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .profiles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .profile-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .profile-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .profile-avatar {
+      width: 100%;
+      height: 250px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 80px;
+    }
+
+    .profile-info {
+      padding: 15px;
+    }
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .profile-details {
+      font-size: 13px;
+      color: #666;
+      margin: 8px 0;
+    }
+
+    .profile-about {
+      font-size: 13px;
+      color: #888;
+      margin: 10px 0;
+      min-height: 30px;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    .like-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: #ff4458;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .like-btn:hover {
+      background: #ff3042;
+    }
+
+    .like-btn.liked {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+  </style>
+
+  <script>
+    let currentUser = null;
+
+    async function loadCurrentUser() {
+      try {
+        const response = await fetch('/api/profile');
+        const data = await response.json();
+        if (data.success) {
+          currentUser = data.user;
+          document.getElementById('username').textContent = `👤 ${currentUser.username}`;
+          if (currentUser.is_admin) {
+            document.getElementById('adminBtn').style.display = 'inline-block';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
+    }
+
+    async function loadProfiles() {
+      try {
+        const response = await fetch('/api/profiles?limit=20');
+        const data = await response.json();
+
+        if (data.success) {
+          const profilesList = document.getElementById('profilesList');
+          profilesList.innerHTML = '';
+
+          if (data.profiles.length === 0) {
+            profilesList.innerHTML = '<div class="loading">Нет доступных профилей</div>';
+            return;
+          }
+
+          data.profiles.forEach(profile => {
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#fa709a', '#feca57'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+            const card = document.createElement('div');
+            card.className = 'profile-card';
+            card.innerHTML = `
+              <div class="profile-avatar" style="background: linear-gradient(135deg, ${randomColor} 0%, ${randomColor}cc 100%)">
+                ${profile.gender === 'Ж' ? '👩' : '👨'}
+              </div>
+              <div class="profile-info">
+                <div class="profile-name">${profile.username}</div>
+                <div class="profile-details">
+                  ${profile.age} лет • ${profile.city}
+                </div>
+                <div class="profile-about">${profile.about || 'Нет описания'}</div>
+                <div class="profile-actions">
+                  <button class="like-btn" data-id="${profile.id}">❤️ Нравится</button>
+                </div>
+              </div>
+            `;
+
+            card.querySelector('.like-btn').addEventListener('click', async (e) => {
+              const btn = e.target;
+              btn.disabled = true;
+              try {
+                await fetch(`/api/like/${profile.id}`, { method: 'POST' });
+                btn.textContent = '✓ Добавлено';
+                btn.classList.add('liked');
+              } catch (error) {
+                console.error('Error liking profile:', error);
+                btn.disabled = false;
+              }
+            });
+
+            profilesList.appendChild(card);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading profiles:', error);
+        document.getElementById('profilesList').innerHTML = '<div class="loading">Ошибка загрузки профилей</div>';
+      }
+    }
+
+    document.getElementById('likesBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      alert('Вам нравятся анкеты будут видны на отдельной странице');
+    });
+
+    loadCurrentUser();
+    loadProfiles();
+  </script>
+</body>
+</html>

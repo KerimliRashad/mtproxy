@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация - LoveMatch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <nav class="navbar">
+      <div class="container">
+        <a href="/" class="logo">💕 LoveMatch</a>
+      </div>
+    </nav>
+
+    <div class="auth-box auth-box-large">
+      <h2>Создать профиль</h2>
+
+      <div id="message" class="message"></div>
+
+      <form id="registerForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="username">Имя пользователя</label>
+            <input type="text" id="username" name="username" required>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Электронная почта</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" name="password" required>
+          </div>
+
+          <div class="form-group">
+            <label for="gender">Пол</label>
+            <select id="gender" name="gender" required>
+              <option value="">Выберите пол</option>
+              <option value="М">Мужчина</option>
+              <option value="Ж">Женщина</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="age">Возраст</label>
+            <input type="number" id="age" name="age" min="18" max="100" required>
+          </div>
+
+          <div class="form-group">
+            <label for="city">Город</label>
+            <input type="text" id="city" name="city" placeholder="Москва" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-full">Зарегистрироваться</button>
+      </form>
+
+      <div class="auth-link">
+        Уже есть аккаунт? <a href="/login">Войти</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const gender = document.getElementById('gender').value;
+      const age = document.getElementById('age').value;
+      const city = document.getElementById('city').value;
+      const messageEl = document.getElementById('message');
+
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password, gender, age, city })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          messageEl.textContent = data.message;
+          messageEl.className = 'message success';
+          setTimeout(() => window.location.href = '/profiles', 1500);
+        } else {
+          messageEl.textContent = data.message;
+          messageEl.className = 'message error';
+        }
+      } catch (error) {
+        messageEl.textContent = 'Ошибка подключения';
+        messageEl.className = 'message error';
+      }
+    });
+  </script>
+</body>
+</html>
