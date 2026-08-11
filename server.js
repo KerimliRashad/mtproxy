@@ -145,32 +145,46 @@ function makeBotsLikeAdmin() {
 }
 
 function makeBotsInteract() {
-  db.all('SELECT id FROM users WHERE id > 6 LIMIT 10', (err, bots) => {
-    if (!bots || bots.length < 2) return;
+  db.all('SELECT id FROM users WHERE id > 6 LIMIT 50', (err, bots) => {
+    if (!bots || bots.length === 0) return;
 
-    const randomBots = bots.sort(() => Math.random() - 0.5).slice(0, 3);
+    const messages = [
+      'Привет! 😊',
+      'Как дела?',
+      'Рад познакомиться! 💕',
+      'Как ты?',
+      'Интересный профиль! 👍',
+      'Привет, как себя чувствуешь?',
+      'Давай общаться 😄',
+      'Очень нравишься! 😍',
+      'Как прошел день?',
+      'Вы мне очень нравитесь!',
+      'Люблю твой стиль! 🎨',
+      'Давай встретимся? ☕',
+      'Ты прекрасна! 💕',
+      'Слышу от тебя первый раз 👋',
+      'Как прошла неделя?'
+    ];
 
-    for (let i = 0; i < randomBots.length - 1; i++) {
-      const from = randomBots[i];
-      const to = randomBots[i + 1];
+    const adminId = 1;
 
-      db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [from.id]);
-
-      const messages = [
-        'Привет! 😊',
-        'Как дела?',
-        'Рад познакомиться! 💕',
-        'Как ты?',
-        'Интересный профиль! 👍',
-        'Привет, как себя чувствуешь?',
-        'Давай общаться 😄',
-        'Очень нравишься! 😍',
-        'Как прошел день?',
-        'Вы мне очень нравитесь!'
-      ];
-
+    // Make 10 random bots message the admin
+    const randomBots = bots.sort(() => Math.random() - 0.5).slice(0, 10);
+    randomBots.forEach(bot => {
+      db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [bot.id]);
       const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+      db.run(
+        'INSERT INTO messages VALUES (NULL, ?, ?, ?, CURRENT_TIMESTAMP)',
+        [bot.id, adminId, randomMsg]
+      );
+    });
 
+    // Also make some bots message each other
+    for (let i = 0; i < Math.min(5, bots.length - 1); i++) {
+      const from = bots[i];
+      const to = bots[i + 1];
+      db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [from.id]);
+      const randomMsg = messages[Math.floor(Math.random() * messages.length)];
       db.run(
         'INSERT INTO messages VALUES (NULL, ?, ?, ?, CURRENT_TIMESTAMP)',
         [from.id, to.id, randomMsg]
@@ -179,9 +193,9 @@ function makeBotsInteract() {
   });
 }
 
-// Run bot behavior every 30 seconds
-setInterval(makeBotsLikeAdmin, 30000);
-setInterval(makeBotsInteract, 45000);
+// Run bot behavior frequently
+setInterval(makeBotsLikeAdmin, 20000);
+setInterval(makeBotsInteract, 15000);
 
 // ========== ROUTES ==========
 

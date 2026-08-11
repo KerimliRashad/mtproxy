@@ -255,26 +255,6 @@
       loadMessages();
     }
 
-    async function loadMessages() {
-      try {
-        const res = await fetch(`/api/messages/${currentChatUserId}`, { credentials: 'include' });
-        const data = await res.json();
-
-        if (data.success) {
-          const window = document.getElementById('messagesWindow');
-          window.innerHTML = data.messages.map(msg => `
-            <div class="message ${msg.from_id === getCurrentUserId() ? 'sent' : 'received'}">
-              ${msg.text}
-            </div>
-          `).join('');
-
-          window.scrollTop = window.scrollHeight;
-        }
-      } catch (error) {
-        console.error('Error loading messages:', error);
-      }
-    }
-
     let myUserId = null;
 
     async function loadCurrentUser() {
@@ -292,6 +272,27 @@
 
     function getCurrentUserId() {
       return myUserId;
+    }
+
+    async function loadMessages() {
+      try {
+        const res = await fetch(`/api/messages/${currentChatUserId}`, { credentials: 'include' });
+        const data = await res.json();
+
+        if (data.success) {
+          const window = document.getElementById('messagesWindow');
+          const sorted = [...data.messages].reverse();
+          window.innerHTML = sorted.map(msg => `
+            <div class="message ${msg.from_id === myUserId ? 'sent' : 'received'}" style="margin-bottom: 8px;">
+              ${msg.text}
+            </div>
+          `).join('');
+
+          window.scrollTop = window.scrollHeight;
+        }
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      }
     }
 
     document.getElementById('messageForm').addEventListener('submit', async (e) => {
@@ -341,6 +342,9 @@
     loadMatches();
     updateNotifBadge();
     setInterval(updateNotifBadge, 5000);
+    setInterval(() => {
+      if (currentChatUserId) loadMessages();
+    }, 3000);
   </script>
 </body>
 </html>
