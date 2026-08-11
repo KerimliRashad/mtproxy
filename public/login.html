@@ -43,5 +43,19 @@
       </div>
     </div>
   </div>
+
+  <script>
+    const errorParam = new URLSearchParams(window.location.search).get('error');
+    const messageDiv = document.getElementById('message');
+
+    if (errorParam) {
+      messageDiv.classList.add('error');
+      if (errorParam === '1') {
+        messageDiv.textContent = '❌ Неправильное имя пользователя или пароль';
+      } else if (errorParam === '2') {
+        messageDiv.textContent = '❌ Аккаунт заблокирован';
+      }
+    }
+  </script>
 </body>
 </html>

@@ -64,5 +64,19 @@
       </div>
     </div>
   </div>
+
+  <script>
+    const errorParam = new URLSearchParams(window.location.search).get('error');
+    const messageDiv = document.getElementById('message');
+
+    if (errorParam) {
+      messageDiv.classList.add('error');
+      if (errorParam === '1') {
+        messageDiv.textContent = '❌ Пожалуйста заполни все поля';
+      } else if (errorParam === '2') {
+        messageDiv.textContent = '❌ Это имя пользователя или email уже используется';
+      }
+    }
+  </script>
 </body>
 </html>
