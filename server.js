@@ -4,10 +4,12 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
+import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const db = new sqlite3.Database(':memory:');
+const dbPath = path.join(__dirname, 'lovematch.db');
+const db = new sqlite3.Database(dbPath);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -145,7 +147,11 @@ app.post('/api/register', (req, res) => {
       if (err) {
         return res.json({ success: false, message: 'Пользователь уже существует' });
       }
-      res.cookie('userId', this.lastID, { maxAge: 30 * 24 * 60 * 60 * 1000 });
+      res.cookie('userId', this.lastID, {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        httpOnly: false,
+        sameSite: 'lax'
+      });
       res.json({ success: true });
     }
   );
@@ -167,7 +173,11 @@ app.post('/api/register-submit', (req, res) => {
       if (err) {
         return res.redirect('/register?error=2');
       }
-      res.cookie('userId', this.lastID, { maxAge: 30 * 24 * 60 * 60 * 1000 });
+      res.cookie('userId', this.lastID, {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        httpOnly: false,
+        sameSite: 'lax'
+      });
       res.redirect('/discover');
     }
   );
@@ -181,7 +191,11 @@ app.post('/api/login', (req, res) => {
       return res.json({ success: false, message: 'Неправильные данные' });
     }
 
-    res.cookie('userId', user.id, { maxAge: 30 * 24 * 60 * 60 * 1000 });
+    res.cookie('userId', user.id, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: false,
+      sameSite: 'lax'
+    });
     res.json({ success: true });
   });
 });
@@ -194,7 +208,11 @@ app.post('/api/login-submit', (req, res) => {
       return res.redirect('/login?error=1');
     }
 
-    res.cookie('userId', user.id, { maxAge: 30 * 24 * 60 * 60 * 1000 });
+    res.cookie('userId', user.id, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: false,
+      sameSite: 'lax'
+    });
     res.redirect('/discover');
   });
 });
