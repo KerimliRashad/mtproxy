@@ -77,6 +77,30 @@ function initDB() {
         [u, e, h, g, a, c, ab, '']
       );
     });
+
+    // Добавить 500 ботов
+    const femaleNames = ['anastasia', 'victoria', 'yulia', 'natasha', 'sophia', 'marina', 'elena', 'irina', 'alexandra', 'ekaterina', 'diana', 'lisa', 'anna', 'maria', 'eva', 'olga', 'daria', 'vera', 'nadia', 'yana'];
+    const maleNames = ['alexander', 'michael', 'dmitry', 'sergei', 'ivan', 'andrey', 'viktor', 'pavel', 'nikolai', 'alexei', 'konstantin', 'ilya', 'maxim', 'roman', 'anton', 'artem', 'boris', 'vladimir', 'igor', 'oleg'];
+    const cities = ['Москва', 'СПб', 'Казань', 'Новосиб', 'Екатеринбург', 'Сочи', 'Киев', 'Крым', 'Питер', 'Тверь', 'Воронеж', 'Самара', 'Уфа', 'Пермь', 'Омск'];
+    const interests = ['путешествия', 'кино', 'спорт', 'музыка', 'искусство', 'готовка', 'читать', 'танцы', 'йога', 'приключения', 'фото', 'природа', 'книги', 'театр', 'вечеринки', 'путешествие'];
+    const abouts = ['Обожаю активный образ жизни', 'Люблю новые впечатления', 'Ищу позитивного человека', 'Открыта новым встречам', 'Интересуюсь искусством', 'Спортивная и энергичная', 'Люблю смеяться', 'Давайте поговорим', 'Ищу приключений', 'Романтичная натура'];
+
+    const h = bcrypt.hashSync('bot123', 10);
+    for (let i = 0; i < 500; i++) {
+      const gender = i % 2 === 0 ? 'Ж' : 'М';
+      const nameList = gender === 'Ж' ? femaleNames : maleNames;
+      const name = nameList[Math.floor(Math.random() * nameList.length)] + '_' + (20 + Math.floor(Math.random() * 30));
+      const email = name + '@bot.com';
+      const age = 20 + Math.floor(Math.random() * 35);
+      const city = cities[Math.floor(Math.random() * cities.length)];
+      const about = abouts[Math.floor(Math.random() * abouts.length)];
+      const interestsStr = interests.slice(0, 3).join(', ');
+
+      db.run(
+        `INSERT OR IGNORE INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+        [name, email, h, gender, age, city, about, interestsStr]
+      );
+    }
   });
 }
 
@@ -242,14 +266,28 @@ app.post('/api/profile/update', (req, res) => {
 app.get('/api/discover', (req, res) => {
   if (!req.userId) return res.json({ success: false });
 
-  db.all(
-    'SELECT id, username, gender, age, city, about FROM users WHERE id != ? LIMIT 20',
-    [req.userId],
-    (err, profiles) => {
-      if (err || !profiles) return res.json({ success: false });
-      res.json({ success: true, profiles });
-    }
-  );
+  db.get('SELECT age, gender, city FROM users WHERE id = ?', [req.userId], (err, currentUser) => {
+    if (!currentUser) return res.json({ success: false });
+
+    db.all(
+      'SELECT id, username, gender, age, city, about, interests FROM users WHERE id != ? LIMIT 50',
+      [req.userId],
+      (err, profiles) => {
+        if (err || !profiles) return res.json({ success: false });
+
+        const profilesWithCompat = profiles.map(p => {
+          let compat = 50;
+          if (p.gender !== currentUser.gender) compat += 20;
+          if (Math.abs(p.age - currentUser.age) <= 5) compat += 20;
+          if (p.city === currentUser.city) compat += 10;
+          compat = Math.min(100, compat + Math.floor(Math.random() * 20));
+          return { ...p, compatibility: compat };
+        });
+
+        res.json({ success: true, profiles: profilesWithCompat });
+      }
+    );
+  });
 });
 
 app.post('/api/like/:id', (req, res) => {
