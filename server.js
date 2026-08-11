@@ -39,7 +39,9 @@ function initDB() {
       about TEXT,
       interests TEXT,
       avatar TEXT DEFAULT '',
-      is_admin BOOLEAN DEFAULT 0
+      is_admin BOOLEAN DEFAULT 0,
+      is_blocked BOOLEAN DEFAULT 0,
+      last_seen DATETIME
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS likes (
@@ -68,7 +70,7 @@ function initDB() {
 
     const hash = bcrypt.hashSync('admin123', 10);
     db.run(`INSERT OR IGNORE INTO users
-            VALUES (1, 'admin14', 'admin@test.com', ?, 'М', 35, 'Москва', 'Админ', 'спорт', '', 1)`,
+            VALUES (1, 'admin14', 'admin@test.com', ?, 'М', 35, 'Москва', 'Админ', 'спорт', '', 1, 0, CURRENT_TIMESTAMP)`,
       [hash]
     );
 
@@ -83,7 +85,7 @@ function initDB() {
     demo.forEach(([u, e, g, a, c, ab]) => {
       const h = bcrypt.hashSync('demo123', 10);
       db.run(`INSERT OR IGNORE INTO users VALUES
-              (NULL, ?, ?, ?, ?, ?, ?, ?, ?, '', 0)`,
+              (NULL, ?, ?, ?, ?, ?, ?, ?, ?, '', 0, 0, CURRENT_TIMESTAMP)`,
         [u, e, h, g, a, c, ab, '']
       );
     });
@@ -107,7 +109,7 @@ function initDB() {
       const interestsStr = interests.slice(0, 3).join(', ');
 
       db.run(
-        `INSERT OR IGNORE INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, '', 0)`,
+        `INSERT OR IGNORE INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, '', 0, 0, CURRENT_TIMESTAMP)`,
         [name, email, h, gender, age, city, about, interestsStr]
       );
     }
@@ -178,7 +180,7 @@ app.post('/api/register', (req, res) => {
   const hash = bcrypt.hashSync(password, 10);
 
   db.run(
-    `INSERT INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, '', '', 0)`,
+    `INSERT INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, '', '', '', 0, 0, CURRENT_TIMESTAMP)`,
     [username, email, hash, gender, age, city],
     function(err) {
       if (err) {
@@ -202,7 +204,7 @@ app.post('/api/register-submit', (req, res) => {
   const hash = bcrypt.hashSync(password, 10);
 
   db.run(
-    `INSERT INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, '', '', 0)`,
+    `INSERT INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, '', '', '', 0, 0, CURRENT_TIMESTAMP)`,
     [username, email, hash, gender, age, city],
     function(err) {
       if (err) {
@@ -223,7 +225,11 @@ app.post('/api/login', (req, res) => {
     if (!user || !bcrypt.compareSync(password, user.password)) {
       return res.json({ success: false, message: 'Неправильные данные' });
     }
+    if (user.is_blocked) {
+      return res.json({ success: false, message: 'Аккаунт заблокирован' });
+    }
 
+    db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
     res.cookie('userId', user.id, {
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
@@ -242,7 +248,11 @@ app.post('/api/login-submit', (req, res) => {
     if (!user || !bcrypt.compareSync(password, user.password)) {
       return res.redirect('/login?error=1');
     }
+    if (user.is_blocked) {
+      return res.redirect('/login?error=2');
+    }
 
+    db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
     res.cookie('userId', user.id, {
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
@@ -422,6 +432,42 @@ app.get('/api/admin/stats', (req, res) => {
           messages: 0
         });
       });
+    });
+  });
+});
+
+app.get('/api/admin/users', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+
+  db.get('SELECT is_admin FROM users WHERE id = ?', [req.userId], (err, u) => {
+    if (!u || !u.is_admin) return res.json({ success: false });
+
+    db.all('SELECT id, username, email, is_blocked, last_seen FROM users ORDER BY id DESC', (err, users) => {
+      res.json({ success: true, users: users || [] });
+    });
+  });
+});
+
+app.post('/api/admin/block/:id', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+
+  db.get('SELECT is_admin FROM users WHERE id = ?', [req.userId], (err, u) => {
+    if (!u || !u.is_admin) return res.json({ success: false });
+
+    db.run('UPDATE users SET is_blocked = 1 WHERE id = ?', [req.params.id], () => {
+      res.json({ success: true });
+    });
+  });
+});
+
+app.post('/api/admin/unblock/:id', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+
+  db.get('SELECT is_admin FROM users WHERE id = ?', [req.userId], (err, u) => {
+    if (!u || !u.is_admin) return res.json({ success: false });
+
+    db.run('UPDATE users SET is_blocked = 0 WHERE id = ?', [req.params.id], () => {
+      res.json({ success: true });
     });
   });
 });
