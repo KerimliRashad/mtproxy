@@ -222,9 +222,15 @@
         const res = await fetch('/api/matches', { credentials: 'include' });
         const data = await res.json();
 
-        if (data.success && data.matches.length > 0) {
+        if (data.success) {
           currentMatches = data.matches;
           const list = document.getElementById('matchesList');
+
+          if (currentMatches.length === 0) {
+            list.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">Пока нет мэтчей</div>';
+            return;
+          }
+
           list.innerHTML = currentMatches.map((m, i) => `
             <div class="match-item ${i === 0 ? 'active' : ''}" onclick="selectMatch(${m.id}, this)">
               <div class="match-name">${m.username}</div>
@@ -232,7 +238,7 @@
             </div>
           `).join('');
 
-          if (currentMatches.length > 0) {
+          if (!currentChatUserId && currentMatches.length > 0) {
             selectMatch(currentMatches[0].id);
           }
         }
@@ -282,11 +288,22 @@
         if (data.success) {
           const window = document.getElementById('messagesWindow');
           const sorted = [...data.messages].reverse();
-          window.innerHTML = sorted.map(msg => `
-            <div class="message ${msg.from_id === myUserId ? 'sent' : 'received'}" style="margin-bottom: 8px;">
-              ${msg.text}
-            </div>
-          `).join('');
+
+          if (sorted.length === 0) {
+            window.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">Нет сообщений. Начните разговор!</div>';
+            return;
+          }
+
+          window.innerHTML = sorted.map(msg => {
+            const time = new Date(msg.time);
+            const timeStr = time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            return `
+              <div class="message ${msg.from_id === myUserId ? 'sent' : 'received'}" style="margin-bottom: 12px; display: flex; flex-direction: column; ${msg.from_id === myUserId ? 'align-items: flex-end;' : 'align-items: flex-start;'}">
+                <div style="font-size: 12px; color: #999; margin-bottom: 4px;">${timeStr}</div>
+                <div>${msg.text}</div>
+              </div>
+            `;
+          }).join('');
 
           window.scrollTop = window.scrollHeight;
         }
@@ -345,6 +362,7 @@
     setInterval(() => {
       if (currentChatUserId) loadMessages();
     }, 3000);
+    setInterval(loadMatches, 8000);
   </script>
 </body>
 </html>
