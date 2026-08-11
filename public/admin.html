@@ -106,7 +106,7 @@
   <script>
     async function loadStats() {
       try {
-        const response = await fetch('/api/admin/stats');
+        const response = await fetch('/api/admin/stats', { credentials: 'include' });
         const data = await response.json();
 
         if (data.success) {

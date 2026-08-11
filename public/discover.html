@@ -270,12 +270,12 @@
 
     async function loadUsername() {
       try {
-        const res = await fetch('/api/profile');
+        const res = await fetch('/api/profile', { credentials: 'include' });
         const data = await res.json();
         if (data.success) {
           document.getElementById('username').textContent = `👤 ${data.user.username}`;
-          if (data.user.is_admin !== undefined) {
-            // Check admin in discover
+          if (data.user.is_admin) {
+            document.getElementById('adminLink').style.display = 'block';
           }
         }
       } catch (error) {
@@ -285,15 +285,18 @@
 
     async function loadProfiles() {
       try {
-        const res = await fetch('/api/discover?limit=20');
+        const res = await fetch('/api/discover', { credentials: 'include' });
         const data = await res.json();
         if (data.success) {
           currentProfiles = data.profiles;
           currentIndex = 0;
           showProfile();
+        } else {
+          document.getElementById('profileCard').innerHTML = '<div class="profile-loading">Ошибка загрузки. Попробуй еще раз</div>';
         }
       } catch (error) {
         console.error('Error loading profiles:', error);
+        document.getElementById('profileCard').innerHTML = '<div class="profile-loading">Ошибка подключения</div>';
       }
     }
 
@@ -359,10 +362,13 @@
     document.getElementById('likeBtn').addEventListener('click', async () => {
       const profile = currentProfiles[currentIndex];
       try {
-        const res = await fetch(`/api/like/${profile.id}`, { method: 'POST' });
+        const res = await fetch(`/api/like/${profile.id}`, {
+          method: 'POST',
+          credentials: 'include'
+        });
         const data = await res.json();
 
-        if (data.isMatch) {
+        if (data.match) {
           document.getElementById('matchNotif').style.display = 'flex';
           setTimeout(() => {
             document.getElementById('matchNotif').style.display = 'none';

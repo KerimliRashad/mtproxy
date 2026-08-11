@@ -131,7 +131,7 @@
   <script>
     async function loadMatches() {
       try {
-        const res = await fetch('/api/matches');
+        const res = await fetch('/api/matches', { credentials: 'include' });
         const data = await res.json();
 
         if (data.success) {
@@ -167,7 +167,7 @@
 
     async function loadUsername() {
       try {
-        const res = await fetch('/api/profile');
+        const res = await fetch('/api/profile', { credentials: 'include' });
         const data = await res.json();
         if (data.success) {
           document.getElementById('username').textContent = `👤 ${data.user.username}`;

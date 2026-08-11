@@ -4,12 +4,10 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
-import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const dbPath = path.join(__dirname, 'lovematch.db');
-const db = new sqlite3.Database(dbPath);
+const db = new sqlite3.Database(':memory:');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

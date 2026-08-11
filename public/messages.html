@@ -216,7 +216,7 @@
 
     async function loadMatches() {
       try {
-        const res = await fetch('/api/matches');
+        const res = await fetch('/api/matches', { credentials: 'include' });
         const data = await res.json();
 
         if (data.success && data.matches.length > 0) {
@@ -254,14 +254,14 @@
 
     async function loadMessages() {
       try {
-        const res = await fetch(`/api/messages/${currentChatUserId}`);
+        const res = await fetch(`/api/messages/${currentChatUserId}`, { credentials: 'include' });
         const data = await res.json();
 
         if (data.success) {
           const window = document.getElementById('messagesWindow');
           window.innerHTML = data.messages.map(msg => `
-            <div class="message ${msg.from_user_id === getCurrentUserId() ? 'sent' : 'received'}">
-              ${msg.message}
+            <div class="message ${msg.from_id === getCurrentUserId() ? 'sent' : 'received'}">
+              ${msg.text}
             </div>
           `).join('');
 
@@ -276,7 +276,7 @@
 
     async function loadCurrentUser() {
       try {
-        const res = await fetch('/api/profile');
+        const res = await fetch('/api/profile', { credentials: 'include' });
         const data = await res.json();
         if (data.success) {
           myUserId = data.user.id;
@@ -303,6 +303,7 @@
         const res = await fetch(`/api/messages/${currentChatUserId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ message })
         });
 

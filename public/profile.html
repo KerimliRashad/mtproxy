@@ -166,13 +166,13 @@
   <script>
     async function loadProfile() {
       try {
-        const res = await fetch('/api/profile');
+        const res = await fetch('/api/profile', { credentials: 'include' });
         const data = await res.json();
 
         if (data.success) {
           const user = data.user;
           document.getElementById('username').value = user.username;
-          document.getElementById('email').textContent = user.email || 'email@example.com';
+          document.getElementById('email').value = user.email || 'email@example.com';
           document.getElementById('age').value = user.age;
           document.getElementById('city').value = user.city;
           document.getElementById('about').value = user.about || '';
@@ -193,6 +193,7 @@
         const res = await fetch('/api/profile/update', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ about, interests, looking_for })
         });
 
