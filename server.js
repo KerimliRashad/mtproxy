@@ -193,7 +193,7 @@ function makeBotsInteract() {
       db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [bot.id]);
       const randomMsg = messages[Math.floor(Math.random() * messages.length)];
       db.run(
-        'INSERT INTO messages VALUES (NULL, ?, ?, ?, CURRENT_TIMESTAMP)',
+        'INSERT INTO messages VALUES (NULL, ?, ?, ?, NULL, 0, CURRENT_TIMESTAMP)',
         [bot.id, adminId, randomMsg]
       );
     });
@@ -205,7 +205,7 @@ function makeBotsInteract() {
       db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [from.id]);
       const randomMsg = messages[Math.floor(Math.random() * messages.length)];
       db.run(
-        'INSERT INTO messages VALUES (NULL, ?, ?, ?, CURRENT_TIMESTAMP)',
+        'INSERT INTO messages VALUES (NULL, ?, ?, ?, NULL, 0, CURRENT_TIMESTAMP)',
         [from.id, to.id, randomMsg]
       );
     }
