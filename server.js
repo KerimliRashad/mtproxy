@@ -76,6 +76,14 @@ function initDB() {
       ip_address TEXT
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS photo_gallery (
+      id INTEGER PRIMARY KEY,
+      user_id INTEGER,
+      photo_data TEXT,
+      position INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
     const hash = bcrypt.hashSync('admin123', 10);
     db.run(`INSERT OR IGNORE INTO users
             VALUES (1, 'admin14', 'admin@test.com', ?, 'М', 35, 'Москва', 'Админ', 'спорт', '', 1, 0, CURRENT_TIMESTAMP)`,
@@ -426,6 +434,49 @@ app.post('/api/avatar/upload', (req, res) => {
       res.json({ success: true, message: 'Фото загружено' });
     }
   );
+});
+
+app.post('/api/gallery/upload', (req, res) => {
+  if (!req.userId) return res.json({ success: false, message: 'Не авторизован' });
+  const { photo } = req.body;
+  if (!photo) return res.json({ success: false, message: 'Фото не загружено' });
+
+  if (photo.length > 6 * 1024 * 1024) {
+    return res.json({ success: false, message: 'Фото слишком большое' });
+  }
+
+  db.run('INSERT INTO photo_gallery VALUES (NULL, ?, ?, (SELECT COALESCE(MAX(position), 0) + 1 FROM photo_gallery WHERE user_id = ?), CURRENT_TIMESTAMP)',
+    [req.userId, photo, req.userId],
+    (err) => {
+      if (err) {
+        return res.json({ success: false, message: 'Ошибка сохранения' });
+      }
+      res.json({ success: true, message: 'Фото добавлено в галерею' });
+    }
+  );
+});
+
+app.get('/api/gallery/:userId', (req, res) => {
+  db.all('SELECT id, photo_data FROM photo_gallery WHERE user_id = ? ORDER BY position',
+    [req.params.userId],
+    (err, photos) => {
+      res.json({ success: true, photos: photos || [] });
+    }
+  );
+});
+
+app.delete('/api/gallery/:photoId', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+
+  db.get('SELECT user_id FROM photo_gallery WHERE id = ?', [req.params.photoId], (err, photo) => {
+    if (!photo || photo.user_id !== req.userId) {
+      return res.json({ success: false, message: 'Нет прав' });
+    }
+
+    db.run('DELETE FROM photo_gallery WHERE id = ?', [req.params.photoId], () => {
+      res.json({ success: true });
+    });
+  });
 });
 
 app.get('/api/discover', (req, res) => {

@@ -32,9 +32,16 @@
 
         <div class="profile-form">
           <div class="form-group">
-            <label>Фото профиля</label>
+            <label>Фото профиля (главное)</label>
             <input type="file" id="avatarInput" accept="image/*">
             <button type="button" id="uploadBtn" class="btn btn-small" style="margin-top: 10px;">📤 Загрузить фото</button>
+          </div>
+
+          <div class="form-group">
+            <label>Галерея фото (до 10 фото)</label>
+            <input type="file" id="galleryInput" accept="image/*" multiple>
+            <button type="button" id="uploadGalleryBtn" class="btn btn-small" style="margin-top: 10px;">📸 Добавить в галерею</button>
+            <div id="galleryPreview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px;"></div>
           </div>
 
           <div class="form-group">
@@ -187,9 +194,51 @@
           document.getElementById('about').value = user.about || '';
           document.getElementById('interests').value = user.interests || '';
           document.getElementById('looking_for').value = user.looking_for || 'отношения';
+
+          loadGallery(user.id);
         }
       } catch (error) {
         console.error('Error loading profile:', error);
+      }
+    }
+
+    async function loadGallery(userId) {
+      try {
+        const res = await fetch(`/api/gallery/${userId}`, { credentials: 'include' });
+        const data = await res.json();
+
+        const preview = document.getElementById('galleryPreview');
+        if (data.photos && data.photos.length > 0) {
+          preview.innerHTML = data.photos.map((p, i) => `
+            <div style="position: relative; border-radius: 8px; overflow: hidden;">
+              <img src="${p.photo_data}" style="width: 100%; height: 100px; object-fit: cover;">
+              <button onclick="deletePhoto(${p.id})" style="position: absolute; top: 2px; right: 2px; background: rgba(255,68,88,0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px;">×</button>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading gallery:', error);
+      }
+    }
+
+    async function deletePhoto(photoId) {
+      if (!confirm('Удалить фото?')) return;
+      try {
+        const res = await fetch(`/api/gallery/${photoId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (data.success) {
+          const userId = document.getElementById('username').value;
+          const profileRes = await fetch('/api/profile', { credentials: 'include' });
+          const profileData = await profileRes.json();
+          if (profileData.success) {
+            loadGallery(profileData.user.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error deleting photo:', error);
       }
     }
 
@@ -213,6 +262,57 @@
       } catch (error) {
         console.error('Error updating profile:', error);
       }
+    });
+
+    document.getElementById('uploadGalleryBtn').addEventListener('click', async () => {
+      const files = document.getElementById('galleryInput').files;
+      if (files.length === 0) return alert('Выбери фото для галереи');
+
+      const uploadBtn = document.getElementById('uploadGalleryBtn');
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = '⏳ Загрузка...';
+
+      let uploaded = 0;
+      for (let file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`❌ ${file.name} слишком большое`);
+          continue;
+        }
+        if (!file.type.startsWith('image/')) {
+          alert(`❌ ${file.name} не является изображением`);
+          continue;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const photo = e.target.result;
+            const res = await fetch('/api/gallery/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ photo })
+            });
+            const data = await res.json();
+            if (data.success) uploaded++;
+          } catch (error) {
+            console.error('Error:', error);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+
+      setTimeout(async () => {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '📸 Добавить в галерею';
+        document.getElementById('galleryInput').value = '';
+        alert(`✅ Загружено ${uploaded} фото`);
+        const profileRes = await fetch('/api/profile', { credentials: 'include' });
+        const profileData = await profileRes.json();
+        if (profileData.success) {
+          loadGallery(profileData.user.id);
+        }
+      }, 2000);
     });
 
     document.getElementById('uploadBtn').addEventListener('click', async () => {
