@@ -329,7 +329,7 @@
       const card = document.getElementById('profileCard');
 
       if (currentIndex >= currentProfiles.length) {
-        card.innerHTML = '<div class="profile-loading">Нет больше профилей</div>';
+        card.innerHTML = '<div class="profile-loading" style="cursor: pointer;" onclick="loadProfiles()">Нет больше профилей<br><br>Нажми чтобы загрузить ещё</div>';
         document.getElementById('skipBtn').disabled = true;
         document.getElementById('likeBtn').disabled = true;
         return;
@@ -431,6 +431,12 @@
     loadProfiles();
     updateNotifBadge();
     setInterval(updateNotifBadge, 5000);
+
+    setInterval(() => {
+      if (currentIndex >= currentProfiles.length - 10) {
+        loadProfiles();
+      }
+    }, 30000);
   </script>
 </body>
 </html>
