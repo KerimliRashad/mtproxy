@@ -219,18 +219,47 @@
       const file = document.getElementById('avatarInput').files[0];
       if (!file) return alert('Выбери фото');
 
+      // Проверка размера (максимум 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        return alert('❌ Фото слишком большое (максимум 5MB)');
+      }
+
+      // Проверка типа файла
+      if (!file.type.startsWith('image/')) {
+        return alert('❌ Загрузи изображение (JPG, PNG и т.д.)');
+      }
+
       const reader = new FileReader();
+      reader.onerror = () => {
+        alert('❌ Ошибка при чтении файла');
+      };
       reader.onload = async (e) => {
-        const avatar = e.target.result;
-        const res = await fetch('/api/avatar/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ avatar })
-        });
-        if ((await res.json()).success) {
-          alert('✅ Фото загружено!');
-          location.reload();
+        try {
+          const avatar = e.target.result;
+          const uploadBtn = document.getElementById('uploadBtn');
+          uploadBtn.disabled = true;
+          uploadBtn.textContent = '⏳ Загрузка...';
+
+          const res = await fetch('/api/avatar/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ avatar })
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            alert('✅ Фото загружено!');
+            location.reload();
+          } else {
+            alert('❌ Ошибка загрузки: ' + (data.message || 'Неизвестная ошибка'));
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '📤 Загрузить фото';
+          }
+        } catch (error) {
+          alert('❌ Ошибка: ' + error.message);
+          document.getElementById('uploadBtn').disabled = false;
+          document.getElementById('uploadBtn').textContent = '📤 Загрузить фото';
         }
       };
       reader.readAsDataURL(file);

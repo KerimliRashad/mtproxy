@@ -408,12 +408,23 @@ app.post('/api/profile/update', (req, res) => {
 });
 
 app.post('/api/avatar/upload', (req, res) => {
-  if (!req.userId) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false, message: 'Не авторизован' });
   const { avatar } = req.body;
-  if (!avatar) return res.json({ success: false });
+  if (!avatar) return res.json({ success: false, message: 'Фото не загружено' });
+
+  // Проверка размера (base64 примерно на 33% больше, чем оригинал)
+  if (avatar.length > 6 * 1024 * 1024) {
+    return res.json({ success: false, message: 'Фото слишком большое' });
+  }
+
   db.run('UPDATE users SET avatar = ? WHERE id = ?',
     [avatar, req.userId],
-    () => res.json({ success: true })
+    (err) => {
+      if (err) {
+        return res.json({ success: false, message: 'Ошибка сохранения' });
+      }
+      res.json({ success: true, message: 'Фото загружено' });
+    }
   );
 });
 
@@ -421,7 +432,7 @@ app.get('/api/discover', (req, res) => {
   if (!req.userId) return res.json({ success: false, message: 'Требуется авторизация' });
 
   db.all(
-    'SELECT id, username, gender, age, city, about, interests, avatar FROM users WHERE id != ? LIMIT 50',
+    'SELECT id, username, gender, age, city, about, interests, avatar, last_seen FROM users WHERE id != ? LIMIT 50',
     [req.userId],
     (err, profiles) => {
       if (err || !profiles) return res.json({ success: false });
@@ -471,7 +482,7 @@ app.get('/api/matches', (req, res) => {
   if (!req.userId) return res.json({ success: false });
 
   db.all(`
-    SELECT DISTINCT u.id, u.username, u.gender, u.age, u.city, u.avatar
+    SELECT DISTINCT u.id, u.username, u.gender, u.age, u.city, u.avatar, u.last_seen
     FROM users u
     INNER JOIN likes l1 ON u.id = l1.to_id
     INNER JOIN likes l2 ON u.id = l2.from_id
