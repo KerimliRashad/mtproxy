@@ -118,6 +118,63 @@ function initDB() {
 
 initDB();
 
+// Bot behavior functions
+function makeBotsLikeAdmin() {
+  db.all('SELECT id FROM users WHERE id > 6', (err, bots) => {
+    if (!bots || bots.length === 0) return;
+    bots.forEach(bot => {
+      db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [bot.id]);
+      db.run('INSERT OR IGNORE INTO likes VALUES (NULL, ?, ?)',
+        [bot.id, 1],
+        () => {
+          db.run('INSERT OR IGNORE INTO notifications VALUES (NULL, 1, ?, ?, 0, CURRENT_TIMESTAMP)',
+            [bot.id, 'like']
+          );
+        }
+      );
+    });
+  });
+}
+
+function makeBotsInteract() {
+  db.all('SELECT id FROM users WHERE id > 6 LIMIT 10', (err, bots) => {
+    if (!bots || bots.length < 2) return;
+
+    const randomBots = bots.sort(() => Math.random() - 0.5).slice(0, 3);
+
+    for (let i = 0; i < randomBots.length - 1; i++) {
+      const from = randomBots[i];
+      const to = randomBots[i + 1];
+
+      db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [from.id]);
+
+      const messages = [
+        'Привет! 😊',
+        'Как дела?',
+        'Рад познакомиться! 💕',
+        'Как ты?',
+        'Интересный профиль! 👍',
+        'Привет, как себя чувствуешь?',
+        'Давай общаться 😄',
+        'Очень нравишься! 😍',
+        'Как прошел день?',
+        'Вы мне очень нравитесь!'
+      ];
+
+      const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+
+      db.run(
+        'INSERT INTO messages VALUES (NULL, ?, ?, ?, CURRENT_TIMESTAMP)',
+        [from.id, to.id, randomMsg]
+      );
+    }
+  });
+}
+
+// Run bot behavior every 30 seconds
+setInterval(makeBotsLikeAdmin, 30000);
+setInterval(makeBotsInteract, 45000);
+
 // ========== ROUTES ==========
 
 app.get('/', (req, res) => {
