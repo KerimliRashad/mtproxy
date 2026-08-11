@@ -68,6 +68,14 @@ function initDB() {
       time DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS login_history (
+      id INTEGER PRIMARY KEY,
+      user_id INTEGER,
+      username TEXT,
+      login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+      ip_address TEXT
+    )`);
+
     const hash = bcrypt.hashSync('admin123', 10);
     db.run(`INSERT OR IGNORE INTO users
             VALUES (1, 'admin14', 'admin@test.com', ?, 'М', 35, 'Москва', 'Админ', 'спорт', '', 1, 0, CURRENT_TIMESTAMP)`,
@@ -280,6 +288,9 @@ app.post('/api/login', (req, res) => {
 
   db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
     if (!user || !bcrypt.compareSync(password, user.password)) {
+      db.run('INSERT INTO login_history VALUES (NULL, NULL, ?, CURRENT_TIMESTAMP, ?)',
+        [username, req.ip || req.connection.remoteAddress || 'unknown']
+      );
       return res.json({ success: false, message: 'Неправильные данные' });
     }
     if (user.is_blocked) {
@@ -287,6 +298,9 @@ app.post('/api/login', (req, res) => {
     }
 
     db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+    db.run('INSERT INTO login_history VALUES (NULL, ?, ?, CURRENT_TIMESTAMP, ?)',
+      [user.id, username, req.ip || req.connection.remoteAddress || 'unknown']
+    );
     res.cookie('userId', user.id, {
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
@@ -303,6 +317,9 @@ app.post('/api/login-submit', (req, res) => {
 
   db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
     if (!user || !bcrypt.compareSync(password, user.password)) {
+      db.run('INSERT INTO login_history VALUES (NULL, NULL, ?, CURRENT_TIMESTAMP, ?)',
+        [username, req.ip || req.connection.remoteAddress || 'unknown']
+      );
       return res.redirect('/login?error=1');
     }
     if (user.is_blocked) {
@@ -310,6 +327,9 @@ app.post('/api/login-submit', (req, res) => {
     }
 
     db.run('UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+    db.run('INSERT INTO login_history VALUES (NULL, ?, ?, CURRENT_TIMESTAMP, ?)',
+      [user.id, username, req.ip || req.connection.remoteAddress || 'unknown']
+    );
     res.cookie('userId', user.id, {
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
@@ -525,6 +545,22 @@ app.post('/api/admin/unblock/:id', (req, res) => {
 
     db.run('UPDATE users SET is_blocked = 0 WHERE id = ?', [req.params.id], () => {
       res.json({ success: true });
+    });
+  });
+});
+
+app.get('/api/admin/login-history', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+
+  db.get('SELECT is_admin FROM users WHERE id = ?', [req.userId], (err, u) => {
+    if (!u || !u.is_admin) return res.json({ success: false });
+
+    db.all(`
+      SELECT * FROM login_history
+      ORDER BY login_time DESC
+      LIMIT 100
+    `, (err, history) => {
+      res.json({ success: true, history: history || [] });
     });
   });
 });

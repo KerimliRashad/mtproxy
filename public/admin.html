@@ -78,6 +78,24 @@
       </div>
 
       <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+        <h2 style="margin-bottom: 20px; color: #333;">🔐 История входов</h2>
+        <div id="loginHistory" style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f5f5f5;">
+                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Имя пользователя</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Время входа</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">IP адрес</th>
+              </tr>
+            </thead>
+            <tbody id="loginHistoryBody">
+              <tr><td colspan="3" style="padding: 20px; text-align: center; color: #999;">Загрузка...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
         <h2 style="margin-bottom: 20px; color: #333;">📊 Система статуса</h2>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -201,10 +219,36 @@
       }
     }
 
+    async function loadLoginHistory() {
+      try {
+        const response = await fetch('/api/admin/login-history', { credentials: 'include' });
+        const data = await response.json();
+
+        if (data.success) {
+          const tbody = document.getElementById('loginHistoryBody');
+          if (data.history.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #999;">Нет истории входов</td></tr>';
+            return;
+          }
+          tbody.innerHTML = data.history.map(record => `
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 12px;">${record.username || '(неизвестно)'}</td>
+              <td style="padding: 12px;">${new Date(record.login_time).toLocaleString('ru-RU')}</td>
+              <td style="padding: 12px;">${record.ip_address}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading login history:', error);
+      }
+    }
+
     loadStats();
     loadUsers();
+    loadLoginHistory();
     setInterval(loadStats, 5000);
     setInterval(loadUsers, 10000);
+    setInterval(loadLoginHistory, 15000);
   </script>
 </body>
 </html>
