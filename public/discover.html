@@ -60,6 +60,7 @@
       <div class="discover-actions">
         <button id="skipBtn" class="btn-action btn-skip">👎 Пропустить</button>
         <button id="likeBtn" class="btn-action btn-like">❤️ Нравится</button>
+        <button id="reportBtn" class="btn-action" style="width: 60px; height: 60px; background: #ff6b6b; color: white; font-size: 24px; border: none; border-radius: 50%; cursor: pointer;">🚩</button>
       </div>
 
       <div id="matchNotif" class="match-notification" style="display:none;">
@@ -447,6 +448,29 @@
     document.getElementById('skipBtn').addEventListener('click', () => {
       currentIndex++;
       showProfile();
+    });
+
+    document.getElementById('reportBtn').addEventListener('click', async () => {
+      const profile = currentProfiles[currentIndex];
+      const reason = prompt('Причина жалобы:\n1 - Дискриминация\n2 - Оскорбление\n3 - Спам\n4 - Поддельный профиль\n5 - Другое');
+      if (!reason) return;
+
+      try {
+        const res = await fetch('/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ reported_user_id: profile.id, reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✅ Жалоба отправлена модераторам');
+          currentIndex++;
+          showProfile();
+        }
+      } catch (error) {
+        console.error('Error reporting profile:', error);
+      }
     });
 
     document.getElementById('likeBtn').addEventListener('click', async () => {

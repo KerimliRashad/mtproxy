@@ -47,8 +47,14 @@
 
             <form id="messageForm" class="message-input-form">
               <input type="text" id="messageInput" placeholder="Напиши сообщение..." class="message-input">
+              <input type="file" id="photoInput" accept="image/*" style="display: none;">
+              <button type="button" onclick="document.getElementById('photoInput').click()" style="padding: 10px 15px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; font-size: 14px;">📷</button>
               <button type="submit" class="btn-send">Отправить</button>
             </form>
+            <div id="photoPreview" style="padding: 0 15px; margin-top: 10px; display: none;">
+              <img id="previewImg" style="max-width: 100px; max-height: 100px; border-radius: 8px;">
+              <button type="button" onclick="cancelPhoto()" style="margin-left: 10px; padding: 5px 10px; background: #ff4458; color: white; border: none; border-radius: 4px; cursor: pointer;">Отмена</button>
+            </div>
           </div>
         </div>
       </div>
@@ -216,6 +222,7 @@
   <script>
     let currentChatUserId = null;
     let currentMatches = [];
+    let selectedPhoto = null;
 
     async function loadMatches() {
       try {
@@ -297,10 +304,15 @@
           window.innerHTML = sorted.map(msg => {
             const time = new Date(msg.time);
             const timeStr = time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            const readStatus = msg.is_read ? '✓✓' : '✓';
             return `
               <div class="message ${msg.from_id === myUserId ? 'sent' : 'received'}" style="margin-bottom: 12px; display: flex; flex-direction: column; ${msg.from_id === myUserId ? 'align-items: flex-end;' : 'align-items: flex-start;'}">
-                <div style="font-size: 12px; color: #999; margin-bottom: 4px;">${timeStr}</div>
-                <div>${msg.text}</div>
+                ${msg.photo_data ? `<img src="${msg.photo_data}" style="max-width: 150px; border-radius: 8px; margin-bottom: 4px;">` : ''}
+                ${msg.text ? `<div>${msg.text}</div>` : ''}
+                <div style="font-size: 11px; color: #999; margin-top: 4px;">
+                  ${timeStr}
+                  ${msg.from_id === myUserId ? ` ${readStatus}` : ''}
+                </div>
               </div>
             `;
           }).join('');
@@ -312,25 +324,50 @@
       }
     }
 
+    document.getElementById('photoInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('❌ Фото слишком большое (максимум 5MB)');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        selectedPhoto = event.target.result;
+        document.getElementById('previewImg').src = selectedPhoto;
+        document.getElementById('photoPreview').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function cancelPhoto() {
+      selectedPhoto = null;
+      document.getElementById('photoInput').value = '';
+      document.getElementById('photoPreview').style.display = 'none';
+    }
+
     document.getElementById('messageForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const input = document.getElementById('messageInput');
       const message = input.value.trim();
 
-      if (!message) return;
+      if (!message && !selectedPhoto) return;
 
       try {
         const res = await fetch(`/api/messages/${currentChatUserId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ message })
+          body: JSON.stringify({ message: message || null, photo: selectedPhoto })
         });
 
         const data = await res.json();
         if (data.success) {
           input.value = '';
+          cancelPhoto();
           loadMessages();
         }
       } catch (error) {

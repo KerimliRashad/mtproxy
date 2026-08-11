@@ -56,6 +56,8 @@ function initDB() {
       from_id INTEGER,
       to_id INTEGER,
       text TEXT,
+      photo_data TEXT,
+      is_read BOOLEAN DEFAULT 0,
       time DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
@@ -81,6 +83,15 @@ function initDB() {
       user_id INTEGER,
       photo_data TEXT,
       position INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS reports (
+      id INTEGER PRIMARY KEY,
+      reported_by INTEGER,
+      reported_user_id INTEGER,
+      reason TEXT,
+      status TEXT DEFAULT 'новая',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
@@ -479,6 +490,18 @@ app.delete('/api/gallery/:photoId', (req, res) => {
   });
 });
 
+app.post('/api/report', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+
+  const { reported_user_id, reason } = req.body;
+  if (!reported_user_id || !reason) return res.json({ success: false });
+
+  db.run('INSERT INTO reports VALUES (NULL, ?, ?, ?, \'новая\', CURRENT_TIMESTAMP)',
+    [req.userId, reported_user_id, reason],
+    () => res.json({ success: true, message: 'Жалоба отправлена' })
+  );
+});
+
 app.get('/api/discover', (req, res) => {
   if (!req.userId) return res.json({ success: false, message: 'Требуется авторизация' });
 
@@ -546,17 +569,21 @@ app.get('/api/matches', (req, res) => {
 app.post('/api/messages/:id', (req, res) => {
   if (!req.userId) return res.json({ success: false });
 
-  const { message } = req.body;
-  if (!message) return res.json({ success: false });
+  const { message, photo } = req.body;
+  if (!message && !photo) return res.json({ success: false });
 
-  db.run('INSERT INTO messages VALUES (NULL, ?, ?, ?, CURRENT_TIMESTAMP)',
-    [req.userId, req.params.id, message],
+  db.run('INSERT INTO messages VALUES (NULL, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
+    [req.userId, req.params.id, message || null, photo || null],
     () => res.json({ success: true })
   );
 });
 
 app.get('/api/messages/:id', (req, res) => {
   if (!req.userId) return res.json({ success: false });
+
+  db.run('UPDATE messages SET is_read = 1 WHERE to_id = ? AND from_id = ?',
+    [req.userId, req.params.id]
+  );
 
   db.all(`
     SELECT * FROM messages
