@@ -57,6 +57,15 @@ function initDB() {
       time DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY,
+      user_id INTEGER,
+      from_id INTEGER,
+      type TEXT,
+      read BOOLEAN DEFAULT 0,
+      time DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
     const hash = bcrypt.hashSync('admin123', 10);
     db.run(`INSERT OR IGNORE INTO users
             VALUES (1, 'admin14', 'admin@test.com', ?, 'М', 35, 'Москва', 'Админ', 'спорт', '', 1)`,
@@ -142,6 +151,11 @@ app.get('/messages', (req, res) => {
 app.get('/profile', (req, res) => {
   if (!req.userId) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'public/profile.html'));
+});
+
+app.get('/notifications', (req, res) => {
+  if (!req.userId) return res.redirect('/login');
+  res.sendFile(path.join(__dirname, 'public/notifications.html'));
 });
 
 app.get('/admin', (req, res) => {
@@ -258,6 +272,30 @@ app.get('/api/profile', (req, res) => {
   });
 });
 
+app.get('/api/notifications', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+
+  db.all(`
+    SELECT n.*, u.username, u.avatar
+    FROM notifications n
+    JOIN users u ON n.from_id = u.id
+    WHERE n.user_id = ?
+    ORDER BY n.time DESC
+    LIMIT 50
+  `, [req.userId], (err, notifs) => {
+    if (err) return res.json({ success: false });
+    res.json({ success: true, notifications: notifs || [] });
+  });
+});
+
+app.post('/api/notifications/read', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+  db.run('UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0',
+    [req.userId],
+    () => res.json({ success: true })
+  );
+});
+
 app.post('/api/profile/update', (req, res) => {
   if (!req.userId) return res.json({ success: false });
 
@@ -305,10 +343,22 @@ app.post('/api/like/:id', (req, res) => {
   db.run('INSERT OR IGNORE INTO likes VALUES (NULL, ?, ?)',
     [req.userId, to],
     () => {
+      db.run('INSERT OR IGNORE INTO notifications VALUES (NULL, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
+        [to, req.userId, 'like']
+      );
+
       db.get(
         'SELECT id FROM likes WHERE from_id = ? AND to_id = ?',
         [to, req.userId],
         (err, match) => {
+          if (match) {
+            db.run('INSERT OR IGNORE INTO notifications VALUES (NULL, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
+              [req.userId, to, 'match']
+            );
+            db.run('INSERT OR IGNORE INTO notifications VALUES (NULL, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
+              [to, req.userId, 'match']
+            );
+          }
           res.json({ success: true, match: !!match });
         }
       );

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Уведомления - LoveMatch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/discover" class="logo">💕 LoveMatch</a>
+      <div class="nav-links">
+        <span id="username" class="username"></span>
+        <a href="/discover" class="nav-item">🔍 Поиск</a>
+        <a href="/matches" class="nav-item">💑 Мэтчи</a>
+        <a href="/messages" class="nav-item">💬 Сообщения</a>
+        <a href="/profile" class="nav-item">👤 Профиль</a>
+        <a href="/api/logout" class="nav-item">Выход</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div style="margin: 40px 0;">
+      <h1 style="font-size: 32px; margin-bottom: 30px; color: #333;">🔔 Уведомления</h1>
+
+      <div id="notifList" style="max-width: 600px; margin: 0 auto;">
+        <div class="loading" style="text-align: center; padding: 40px; color: #999;">Загрузка...</div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .notification-item {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-left: 4px solid #667eea;
+    }
+
+    .notification-item:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      transform: translateX(5px);
+    }
+
+    .notification-item.unread {
+      background: #f5f7fa;
+    }
+
+    .notification-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .notification-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .notification-content {
+      flex: 1;
+    }
+
+    .notification-text {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .notification-time {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .notification-icon {
+      font-size: 20px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+  </style>
+
+  <script>
+    async function loadNotifications() {
+      try {
+        const res = await fetch('/api/notifications', { credentials: 'include' });
+        const data = await res.json();
+
+        if (data.success) {
+          const list = document.getElementById('notifList');
+
+          if (data.notifications.length === 0) {
+            list.innerHTML = `
+              <div class="empty">
+                <div class="empty-icon">📭</div>
+                <p>У тебя пока нет уведомлений</p>
+              </div>
+            `;
+            return;
+          }
+
+          list.innerHTML = data.notifications.map(n => {
+            const emoji = n.type === 'like' ? '❤️' : '💕';
+            const text = n.type === 'like'
+              ? `${n.username} тебе нравится`
+              : `Это матч! 💕 Вы нравитесь друг другу`;
+            const avatar = n.avatar
+              ? `<img src="${n.avatar}" />`
+              : '👤';
+
+            return `
+              <div class="notification-item ${n.read ? '' : 'unread'}">
+                <div class="notification-avatar">${avatar}</div>
+                <div class="notification-content">
+                  <div class="notification-text"><strong>${text}</strong></div>
+                  <div class="notification-time">${new Date(n.time).toLocaleString('ru-RU')}</div>
+                </div>
+                <div class="notification-icon">${emoji}</div>
+              </div>
+            `;
+          }).join('');
+
+          await fetch('/api/notifications/read', {
+            method: 'POST',
+            credentials: 'include'
+          });
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    async function loadUsername() {
+      try {
+        const res = await fetch('/api/profile', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('username').textContent = `👤 ${data.user.username}`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    loadUsername();
+    loadNotifications();
+    setInterval(loadNotifications, 5000);
+  </script>
+</body>
+</html>
