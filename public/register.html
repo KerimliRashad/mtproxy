@@ -19,7 +19,7 @@
 
       <div id="message" class="message"></div>
 
-      <form id="registerForm">
+      <form method="POST" action="/api/register-submit">
         <div class="form-group">
           <label for="username">Имя пользователя</label>
           <input type="text" id="username" name="username" placeholder="Уникальное имя" required>
@@ -64,45 +64,5 @@
       </div>
     </div>
   </div>
-
-  <script>
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const username = document.getElementById('username').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const gender = document.getElementById('gender').value;
-      const age = document.getElementById('age').value;
-      const city = document.getElementById('city').value;
-      const messageEl = document.getElementById('message');
-
-      if (age < 18) {
-        messageEl.textContent = '❌ Минимальный возраст 18 лет';
-        messageEl.className = 'message error';
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, email, password, gender, age, city })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          window.location.href = '/discover';
-        } else {
-          messageEl.textContent = '❌ ' + (data.message || 'Ошибка регистрации');
-          messageEl.className = 'message error';
-        }
-      } catch (error) {
-        messageEl.textContent = '❌ Ошибка подключения';
-        messageEl.className = 'message error';
-      }
-    });
-  </script>
 </body>
 </html>

@@ -19,9 +19,9 @@
 
       <div id="message" class="message"></div>
 
-      <form id="loginForm">
+      <form method="POST" action="/api/login-submit">
         <div class="form-group">
-          <label for="username">Имя пользователя или Email</label>
+          <label for="username">Имя пользователя</label>
           <input type="text" id="username" name="username" required autofocus>
         </div>
 
@@ -43,35 +43,5 @@
       </div>
     </div>
   </div>
-
-  <script>
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const messageEl = document.getElementById('message');
-
-      try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          window.location.href = '/discover';
-        } else {
-          messageEl.textContent = '❌ ' + (data.message || 'Ошибка входа');
-          messageEl.className = 'message error';
-        }
-      } catch (error) {
-        messageEl.textContent = '❌ Ошибка подключения';
-        messageEl.className = 'message error';
-      }
-    });
-  </script>
 </body>
 </html>

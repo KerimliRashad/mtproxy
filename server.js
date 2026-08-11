@@ -151,6 +151,28 @@ app.post('/api/register', (req, res) => {
   );
 });
 
+app.post('/api/register-submit', (req, res) => {
+  const { username, email, password, gender, age, city } = req.body;
+
+  if (!username || !email || !password || !gender || !age || !city) {
+    return res.redirect('/register?error=1');
+  }
+
+  const hash = bcrypt.hashSync(password, 10);
+
+  db.run(
+    `INSERT INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, '', '', 0)`,
+    [username, email, hash, gender, age, city],
+    function(err) {
+      if (err) {
+        return res.redirect('/register?error=2');
+      }
+      res.cookie('userId', this.lastID, { maxAge: 30 * 24 * 60 * 60 * 1000 });
+      res.redirect('/discover');
+    }
+  );
+});
+
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -161,6 +183,19 @@ app.post('/api/login', (req, res) => {
 
     res.cookie('userId', user.id, { maxAge: 30 * 24 * 60 * 60 * 1000 });
     res.json({ success: true });
+  });
+});
+
+app.post('/api/login-submit', (req, res) => {
+  const { username, password } = req.body;
+
+  db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      return res.redirect('/login?error=1');
+    }
+
+    res.cookie('userId', user.id, { maxAge: 30 * 24 * 60 * 60 * 1000 });
+    res.redirect('/discover');
   });
 });
 
