@@ -170,9 +170,7 @@ app.post('/api/register', (req, res) => {
         return res.json({ success: false, message: 'Пользователь уже существует' });
       }
       res.cookie('userId', this.lastID, {
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        httpOnly: false,
-        sameSite: 'lax'
+        maxAge: 30 * 24 * 60 * 60 * 1000
       });
       res.json({ success: true });
     }
@@ -196,9 +194,7 @@ app.post('/api/register-submit', (req, res) => {
         return res.redirect('/register?error=2');
       }
       res.cookie('userId', this.lastID, {
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        httpOnly: false,
-        sameSite: 'lax'
+        maxAge: 30 * 24 * 60 * 60 * 1000
       });
       res.redirect('/discover');
     }
@@ -242,6 +238,14 @@ app.post('/api/login-submit', (req, res) => {
 app.get('/api/logout', (req, res) => {
   res.clearCookie('userId');
   res.redirect('/');
+});
+
+app.get('/api/test', (req, res) => {
+  res.json({
+    cookies: req.cookies,
+    userId: req.userId,
+    headers: req.headers.cookie
+  });
 });
 
 app.get('/api/profile', (req, res) => {
