@@ -93,11 +93,9 @@
         const data = await response.json();
 
         if (data.success) {
-          messageEl.textContent = '✅ ' + data.message;
-          messageEl.className = 'message success';
-          setTimeout(() => window.location.href = '/discover', 1500);
+          window.location.href = '/discover';
         } else {
-          messageEl.textContent = '❌ ' + data.message;
+          messageEl.textContent = '❌ ' + (data.message || 'Ошибка регистрации');
           messageEl.className = 'message error';
         }
       } catch (error) {
