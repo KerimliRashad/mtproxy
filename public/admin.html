@@ -23,73 +23,84 @@
       <h1 style="font-size: 32px; margin-bottom: 10px;">⚙️ Панель администратора</h1>
       <p style="color: #666; margin-bottom: 30px;">Управление сайтом и статистика</p>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-info">
-            <div class="stat-label">Всего пользователей</div>
-            <div class="stat-value" id="totalUsers">0</div>
+      <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div class="stat-card" style="padding: 15px;">
+          <div class="stat-icon" style="font-size: 28px;">👥</div>
+          <div class="stat-info" style="margin-top: 8px;">
+            <div class="stat-label" style="font-size: 11px;">Пользователей</div>
+            <div class="stat-value" id="totalUsers" style="font-size: 20px;">0</div>
           </div>
         </div>
 
-        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
-          <div class="stat-icon">❤️</div>
-          <div class="stat-info">
-            <div class="stat-label">Всего лайков</div>
-            <div class="stat-value" id="totalLikes">0</div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c); padding: 15px;">
+          <div class="stat-icon" style="font-size: 28px;">❤️</div>
+          <div class="stat-info" style="margin-top: 8px;">
+            <div class="stat-label" style="font-size: 11px;">Лайков</div>
+            <div class="stat-value" id="totalLikes" style="font-size: 20px;">0</div>
           </div>
         </div>
 
-        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
-          <div class="stat-icon">💑</div>
-          <div class="stat-info">
-            <div class="stat-label">Всего мэтчей</div>
-            <div class="stat-value" id="totalMatches">0</div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe); padding: 15px;">
+          <div class="stat-icon" style="font-size: 28px;">💑</div>
+          <div class="stat-info" style="margin-top: 8px;">
+            <div class="stat-label" style="font-size: 11px;">Мэтчей</div>
+            <div class="stat-value" id="totalMatches" style="font-size: 20px;">0</div>
           </div>
         </div>
 
-        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
-          <div class="stat-icon">💬</div>
-          <div class="stat-info">
-            <div class="stat-label">Сообщений</div>
-            <div class="stat-value" id="totalMessages">0</div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7); padding: 15px;">
+          <div class="stat-icon" style="font-size: 28px;">💬</div>
+          <div class="stat-info" style="margin-top: 8px;">
+            <div class="stat-label" style="font-size: 11px;">Сообщений</div>
+            <div class="stat-value" id="totalMessages" style="font-size: 20px;">0</div>
           </div>
         </div>
       </div>
 
-      <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
-        <h2 style="margin-bottom: 20px; color: #333;">👥 Управление пользователями</h2>
-        <div id="usersList" style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse;">
+      <div style="background: white; padding: 20px; border-radius: 12px; margin-top: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="margin: 0; color: #333; font-size: 18px;">👥 Пользователи</h2>
+          <input type="text" id="userSearch" placeholder="Поиск..." style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 200px;">
+        </div>
+        <div id="usersTableContainer" style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
-              <tr style="background: #f5f5f5;">
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">ID</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Имя пользователя</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Email</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Статус</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Действия</th>
+              <tr style="background: #667eea; color: white; position: sticky; top: 0;">
+                <th style="padding: 10px; text-align: left;">ID</th>
+                <th style="padding: 10px; text-align: left;">Имя</th>
+                <th style="padding: 10px; text-align: left;">Email</th>
+                <th style="padding: 10px; text-align: center;">Статус</th>
+                <th style="padding: 10px; text-align: center;">Действие</th>
               </tr>
             </thead>
             <tbody id="usersTableBody">
-              <tr><td colspan="5" style="padding: 20px; text-align: center; color: #999;">Загрузка...</td></tr>
+              <tr><td colspan="5" style="padding: 15px; text-align: center; color: #999;">Загрузка...</td></tr>
             </tbody>
           </table>
         </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 12px;">
+          <span id="usersCount" style="color: #666;">Пользователей: 0</span>
+          <div>
+            <button onclick="prevUsersPage()" style="padding: 6px 10px; margin: 0 4px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">← Назад</button>
+            <span id="usersPageInfo" style="margin: 0 8px;">1/1</span>
+            <button onclick="nextUsersPage()" style="padding: 6px 10px; margin: 0 4px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Вперёд →</button>
+          </div>
+        </div>
       </div>
 
-      <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
-        <h2 style="margin-bottom: 20px; color: #333;">🔐 История входов</h2>
-        <div id="loginHistory" style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse;">
+      <div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+        <h2 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">🔐 История входов (последние)</h2>
+        <div id="loginHistory" style="overflow-x: auto; max-height: 300px; overflow-y: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
             <thead>
-              <tr style="background: #f5f5f5;">
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Имя пользователя</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Время входа</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">IP адрес</th>
+              <tr style="background: #667eea; color: white; position: sticky; top: 0;">
+                <th style="padding: 10px; text-align: left;">Пользователь</th>
+                <th style="padding: 10px; text-align: left;">Время</th>
+                <th style="padding: 10px; text-align: left;">IP</th>
               </tr>
             </thead>
             <tbody id="loginHistoryBody">
-              <tr><td colspan="3" style="padding: 20px; text-align: center; color: #999;">Загрузка...</td></tr>
+              <tr><td colspan="3" style="padding: 15px; text-align: center; color: #999;">Загрузка...</td></tr>
             </tbody>
           </table>
         </div>
@@ -158,34 +169,82 @@
       }
     }
 
+    let allUsers = [];
+    let usersCurrentPage = 1;
+    const usersPerPage = 10;
+
     async function loadUsers() {
       try {
         const response = await fetch('/api/admin/users', { credentials: 'include' });
         const data = await response.json();
 
         if (data.success) {
-          const tbody = document.getElementById('usersTableBody');
-          tbody.innerHTML = data.users.map(user => `
-            <tr style="border-bottom: 1px solid #eee;">
-              <td style="padding: 12px;">${user.id}</td>
-              <td style="padding: 12px;">${user.username}</td>
-              <td style="padding: 12px;">${user.email}</td>
-              <td style="padding: 12px;">
-                ${user.is_blocked ? '<span style="color: #ff4458; font-weight: bold;">🚫 Заблокирован</span>' : '<span style="color: #3c3; font-weight: bold;">✅ Активен</span>'}
-              </td>
-              <td style="padding: 12px;">
-                ${user.is_blocked
-                  ? `<button onclick="unblockUser(${user.id})" style="padding: 8px 12px; background: #43e97b; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Разблокировать</button>`
-                  : `<button onclick="blockUser(${user.id})" style="padding: 8px 12px; background: #ff4458; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Заблокировать</button>`
-                }
-              </td>
-            </tr>
-          `).join('');
+          allUsers = data.users;
+          document.getElementById('usersCount').textContent = `Пользователей: ${allUsers.length}`;
+          displayUsersPage();
         }
       } catch (error) {
         console.error('Error loading users:', error);
       }
     }
+
+    function filterUsers() {
+      const searchText = document.getElementById('userSearch').value.toLowerCase();
+      return allUsers.filter(u =>
+        u.username.toLowerCase().includes(searchText) ||
+        u.email.toLowerCase().includes(searchText)
+      );
+    }
+
+    function displayUsersPage() {
+      const filtered = filterUsers();
+      const totalPages = Math.ceil(filtered.length / usersPerPage);
+      const start = (usersCurrentPage - 1) * usersPerPage;
+      const pageUsers = filtered.slice(start, start + usersPerPage);
+
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = pageUsers.map(user => `
+        <tr style="border-bottom: 1px solid #eee; hover-effect: true;">
+          <td style="padding: 10px; font-size: 12px;">#${user.id}</td>
+          <td style="padding: 10px; font-size: 12px; font-weight: 500;">${user.username}</td>
+          <td style="padding: 10px; font-size: 11px; color: #666;">${user.email}</td>
+          <td style="padding: 10px; text-align: center;">
+            ${user.is_blocked
+              ? '<span style="background: #ffebee; color: #c62828; padding: 4px 8px; border-radius: 4px; font-size: 11px;">🚫</span>'
+              : '<span style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 11px;">✅</span>'}
+          </td>
+          <td style="padding: 10px; text-align: center;">
+            ${user.is_blocked
+              ? `<button onclick="unblockUser(${user.id})" style="padding: 5px 10px; background: #43e97b; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;">✓</button>`
+              : `<button onclick="blockUser(${user.id})" style="padding: 5px 10px; background: #ff4458; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;">✕</button>`
+            }
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('usersPageInfo').textContent = `${usersCurrentPage}/${totalPages || 1}`;
+    }
+
+    function nextUsersPage() {
+      const filtered = filterUsers();
+      const totalPages = Math.ceil(filtered.length / usersPerPage);
+      if (usersCurrentPage < totalPages) {
+        usersCurrentPage++;
+        displayUsersPage();
+      }
+    }
+
+    function prevUsersPage() {
+      if (usersCurrentPage > 1) {
+        usersCurrentPage--;
+        displayUsersPage();
+      }
+    }
+
+    document.getElementById('userSearch').addEventListener('input', () => {
+      usersCurrentPage = 1;
+      displayUsersPage();
+    });
 
     async function blockUser(userId) {
       if (!confirm('Заблокировать этого пользователя?')) return;
@@ -227,16 +286,21 @@
         if (data.success) {
           const tbody = document.getElementById('loginHistoryBody');
           if (data.history.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #999;">Нет истории входов</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #999;">Нет истории входов</td></tr>';
             return;
           }
-          tbody.innerHTML = data.history.map(record => `
+          tbody.innerHTML = data.history.slice(0, 15).map(record => {
+            const time = new Date(record.login_time);
+            const timeStr = time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = time.toLocaleDateString('ru-RU', { month: '2-digit', day: '2-digit' });
+            return `
             <tr style="border-bottom: 1px solid #eee;">
-              <td style="padding: 12px;">${record.username || '(неизвестно)'}</td>
-              <td style="padding: 12px;">${new Date(record.login_time).toLocaleString('ru-RU')}</td>
-              <td style="padding: 12px;">${record.ip_address}</td>
+              <td style="padding: 8px; font-size: 11px; font-weight: 500;">${record.username || '❌'}</td>
+              <td style="padding: 8px; font-size: 11px; color: #666;">${dateStr} ${timeStr}</td>
+              <td style="padding: 8px; font-size: 10px; color: #999;">${record.ip_address}</td>
             </tr>
-          `).join('');
+          `;
+          }).join('');
         }
       } catch (error) {
         console.error('Error loading login history:', error);
