@@ -1,26 +1,29 @@
 import express from 'express';
-import session from 'express-session';
 import bcrypt from 'bcryptjs';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const app = express();
 const db = new sqlite3.Database(':memory:');
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
-  secret: 'lovematch-2024',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }
-}));
+// Простая аутентификация через cookie
+const authMiddleware = (req, res, next) => {
+  const userId = req.cookies.userId;
+  if (userId) {
+    req.userId = parseInt(userId);
+  }
+  next();
+};
+
+app.use(authMiddleware);
 
 // Инициализация БД
 function initDB() {
@@ -53,14 +56,12 @@ function initDB() {
       time DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    // Добавляем админа
     const hash = bcrypt.hashSync('admin123', 10);
     db.run(`INSERT OR IGNORE INTO users
             VALUES (1, 'admin14', 'admin@test.com', ?, 'М', 35, 'Москва', 'Админ', 'спорт', 1)`,
       [hash]
     );
 
-    // Демо пользователи
     const demo = [
       ['anna_25', 'anna@t.com', 'Ж', 25, 'Москва', 'Люблю путешествия'],
       ['maria_23', 'maria@t.com', 'Ж', 23, 'СПб', 'Йога и кино'],
@@ -83,52 +84,44 @@ initDB();
 
 // ========== ROUTES ==========
 
-// Главная
 app.get('/', (req, res) => {
-  if (req.session.user) return res.redirect('/discover');
+  if (req.userId) return res.redirect('/discover');
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// Вход
 app.get('/login', (req, res) => {
-  if (req.session.user) return res.redirect('/discover');
+  if (req.userId) return res.redirect('/discover');
   res.sendFile(path.join(__dirname, 'public/login.html'));
 });
 
-// Регистрация
 app.get('/register', (req, res) => {
-  if (req.session.user) return res.redirect('/discover');
+  if (req.userId) return res.redirect('/discover');
   res.sendFile(path.join(__dirname, 'public/register.html'));
 });
 
-// Поиск профилей
 app.get('/discover', (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
+  if (!req.userId) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'public/discover.html'));
 });
 
-// Мэтчи
 app.get('/matches', (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
+  if (!req.userId) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'public/matches.html'));
 });
 
-// Сообщения
 app.get('/messages', (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
+  if (!req.userId) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'public/messages.html'));
 });
 
-// Профиль
 app.get('/profile', (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
+  if (!req.userId) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'public/profile.html'));
 });
 
-// Админ
 app.get('/admin', (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
-  db.get('SELECT is_admin FROM users WHERE id = ?', [req.session.user.id], (err, u) => {
+  if (!req.userId) return res.redirect('/login');
+  db.get('SELECT is_admin FROM users WHERE id = ?', [req.userId], (err, u) => {
     if (!u || !u.is_admin) return res.redirect('/discover');
     res.sendFile(path.join(__dirname, 'public/admin.html'));
   });
@@ -136,7 +129,6 @@ app.get('/admin', (req, res) => {
 
 // ========== API ==========
 
-// Регистрация
 app.post('/api/register', (req, res) => {
   const { username, email, password, gender, age, city } = req.body;
 
@@ -153,13 +145,12 @@ app.post('/api/register', (req, res) => {
       if (err) {
         return res.json({ success: false, message: 'Пользователь уже существует' });
       }
-      req.session.user = { id: this.lastID, username };
+      res.cookie('userId', this.lastID, { maxAge: 30 * 24 * 60 * 60 * 1000 });
       res.json({ success: true });
     }
   );
 });
 
-// Вход
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -168,45 +159,41 @@ app.post('/api/login', (req, res) => {
       return res.json({ success: false, message: 'Неправильные данные' });
     }
 
-    req.session.user = { id: user.id, username: user.username };
+    res.cookie('userId', user.id, { maxAge: 30 * 24 * 60 * 60 * 1000 });
     res.json({ success: true });
   });
 });
 
-// Выход
 app.get('/api/logout', (req, res) => {
-  req.session.destroy();
+  res.clearCookie('userId');
   res.redirect('/');
 });
 
-// Мой профиль
 app.get('/api/profile', (req, res) => {
-  if (!req.session.user) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false });
 
-  db.get('SELECT * FROM users WHERE id = ?', [req.session.user.id], (err, user) => {
+  db.get('SELECT * FROM users WHERE id = ?', [req.userId], (err, user) => {
     if (!user) return res.json({ success: false });
     res.json({ success: true, user });
   });
 });
 
-// Обновить профиль
 app.post('/api/profile/update', (req, res) => {
-  if (!req.session.user) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false });
 
   const { about, interests } = req.body;
   db.run('UPDATE users SET about = ?, interests = ? WHERE id = ?',
-    [about || '', interests || '', req.session.user.id],
+    [about || '', interests || '', req.userId],
     () => res.json({ success: true })
   );
 });
 
-// Получить профили
 app.get('/api/discover', (req, res) => {
-  if (!req.session.user) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false });
 
   db.all(
-    'SELECT id, username, gender, age, city, about FROM users WHERE id != ?',
-    [req.session.user.id],
+    'SELECT id, username, gender, age, city, about FROM users WHERE id != ? LIMIT 20',
+    [req.userId],
     (err, profiles) => {
       if (err || !profiles) return res.json({ success: false });
       res.json({ success: true, profiles });
@@ -214,18 +201,17 @@ app.get('/api/discover', (req, res) => {
   );
 });
 
-// Лайк
 app.post('/api/like/:id', (req, res) => {
-  if (!req.session.user) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false });
 
   const to = req.params.id;
 
   db.run('INSERT OR IGNORE INTO likes VALUES (NULL, ?, ?)',
-    [req.session.user.id, to],
+    [req.userId, to],
     () => {
       db.get(
         'SELECT id FROM likes WHERE from_id = ? AND to_id = ?',
-        [to, req.session.user.id],
+        [to, req.userId],
         (err, match) => {
           res.json({ success: true, match: !!match });
         }
@@ -234,54 +220,50 @@ app.post('/api/like/:id', (req, res) => {
   );
 });
 
-// Мэтчи
 app.get('/api/matches', (req, res) => {
-  if (!req.session.user) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false });
 
   db.all(`
-    SELECT u.id, u.username, u.gender, u.age, u.city
+    SELECT DISTINCT u.id, u.username, u.gender, u.age, u.city
     FROM users u
     INNER JOIN likes l1 ON u.id = l1.to_id
     INNER JOIN likes l2 ON u.id = l2.from_id
     WHERE l1.from_id = ? AND l2.to_id = ?
-  `, [req.session.user.id, req.session.user.id], (err, matches) => {
+  `, [req.userId, req.userId], (err, matches) => {
     res.json({ success: true, matches: matches || [] });
   });
 });
 
-// Отправить сообщение
 app.post('/api/messages/:id', (req, res) => {
-  if (!req.session.user) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false });
 
   const { message } = req.body;
   if (!message) return res.json({ success: false });
 
   db.run('INSERT INTO messages VALUES (NULL, ?, ?, ?, CURRENT_TIMESTAMP)',
-    [req.session.user.id, req.params.id, message],
+    [req.userId, req.params.id, message],
     () => res.json({ success: true })
   );
 });
 
-// Получить сообщения
 app.get('/api/messages/:id', (req, res) => {
-  if (!req.session.user) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false });
 
   db.all(`
     SELECT * FROM messages
     WHERE (from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?)
     ORDER BY time DESC LIMIT 50
-  `, [req.session.user.id, req.params.id, req.params.id, req.session.user.id],
+  `, [req.userId, req.params.id, req.params.id, req.userId],
     (err, msgs) => {
       res.json({ success: true, messages: msgs || [] });
     }
   );
 });
 
-// Админ статистика
 app.get('/api/admin/stats', (req, res) => {
-  if (!req.session.user) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false });
 
-  db.get('SELECT is_admin FROM users WHERE id = ?', [req.session.user.id], (err, u) => {
+  db.get('SELECT is_admin FROM users WHERE id = ?', [req.userId], (err, u) => {
     if (!u || !u.is_admin) return res.json({ success: false });
 
     db.get('SELECT COUNT(*) as total FROM users', (err, users) => {
@@ -298,9 +280,8 @@ app.get('/api/admin/stats', (req, res) => {
   });
 });
 
-// Стартуем
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`\n🌟 LoveMatch работает на порту ${PORT}`);
-  console.log(`📝 Логин: admin14 / admin123\n`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌟 LoveMatch на порту ${PORT}`);
+  console.log(`📝 admin14 / admin123\n`);
 });
