@@ -210,9 +210,7 @@ app.post('/api/login', (req, res) => {
     }
 
     res.cookie('userId', user.id, {
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      httpOnly: false,
-      sameSite: 'lax'
+      maxAge: 30 * 24 * 60 * 60 * 1000
     });
     res.json({ success: true });
   });
@@ -221,15 +219,17 @@ app.post('/api/login', (req, res) => {
 app.post('/api/login-submit', (req, res) => {
   const { username, password } = req.body;
 
+  if (!username || !password) {
+    return res.redirect('/login?error=1');
+  }
+
   db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
     if (!user || !bcrypt.compareSync(password, user.password)) {
       return res.redirect('/login?error=1');
     }
 
     res.cookie('userId', user.id, {
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      httpOnly: false,
-      sameSite: 'lax'
+      maxAge: 30 * 24 * 60 * 60 * 1000
     });
     res.redirect('/discover');
   });
