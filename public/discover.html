@@ -25,6 +25,33 @@
   </nav>
 
   <div class="container">
+    <div style="background: white; padding: 20px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+      <h3 style="margin-bottom: 15px; color: #333;">🔍 Фильтры</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Возраст от</label>
+          <input type="number" id="ageMin" value="18" min="18" max="100" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Возраст до</label>
+          <input type="number" id="ageMax" value="60" min="18" max="100" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Город</label>
+          <input type="text" id="cityFilter" placeholder="Москва" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Пол</label>
+          <select id="genderFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+            <option value="">Любой</option>
+            <option value="М">Мужчина</option>
+            <option value="Ж">Женщина</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="applyFilters()" style="margin-top: 12px; padding: 10px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Применить фильтры</button>
+    </div>
+
     <div class="discover-section">
       <div class="discover-card" id="profileCard">
         <div class="profile-loading">Загрузка профилей...</div>
@@ -292,6 +319,7 @@
   <script>
     let currentProfiles = [];
     let currentIndex = 0;
+    let allProfiles = [];
 
     function getOnlineStatus(lastSeen) {
       if (!lastSeen) return 'недавно';
@@ -330,9 +358,8 @@
         const res = await fetch('/api/discover', { credentials: 'include' });
         const data = await res.json();
         if (data.success) {
-          currentProfiles = data.profiles;
-          currentIndex = 0;
-          showProfile();
+          allProfiles = data.profiles;
+          applyFilters();
         } else {
           document.getElementById('profileCard').innerHTML = '<div class="profile-loading">Ошибка загрузки. Попробуй еще раз</div>';
         }
@@ -340,6 +367,23 @@
         console.error('Error loading profiles:', error);
         document.getElementById('profileCard').innerHTML = '<div class="profile-loading">Ошибка подключения</div>';
       }
+    }
+
+    function applyFilters() {
+      const ageMin = parseInt(document.getElementById('ageMin').value) || 18;
+      const ageMax = parseInt(document.getElementById('ageMax').value) || 100;
+      const cityFilter = document.getElementById('cityFilter').value.toLowerCase();
+      const genderFilter = document.getElementById('genderFilter').value;
+
+      currentProfiles = allProfiles.filter(p => {
+        if (p.age < ageMin || p.age > ageMax) return false;
+        if (cityFilter && !p.city.toLowerCase().includes(cityFilter)) return false;
+        if (genderFilter && p.gender !== genderFilter) return false;
+        return true;
+      });
+
+      currentIndex = 0;
+      showProfile();
     }
 
     function showProfile() {
