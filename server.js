@@ -139,7 +139,7 @@ function calculateCompatibility(user1, user2) {
 // Middleware аутентификации
 const requireAuth = (req, res, next) => {
   if (!req.session.userId) {
-    return res.json({ success: false, message: 'Требуется авторизация' });
+    return res.redirect('/login');
   }
   next();
 };
