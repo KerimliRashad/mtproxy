@@ -38,6 +38,7 @@ function initDB() {
       city TEXT,
       about TEXT,
       interests TEXT,
+      avatar TEXT DEFAULT '',
       is_admin BOOLEAN DEFAULT 0
     )`);
 
@@ -58,7 +59,7 @@ function initDB() {
 
     const hash = bcrypt.hashSync('admin123', 10);
     db.run(`INSERT OR IGNORE INTO users
-            VALUES (1, 'admin14', 'admin@test.com', ?, 'М', 35, 'Москва', 'Админ', 'спорт', 1)`,
+            VALUES (1, 'admin14', 'admin@test.com', ?, 'М', 35, 'Москва', 'Админ', 'спорт', '', 1)`,
       [hash]
     );
 
@@ -73,7 +74,7 @@ function initDB() {
     demo.forEach(([u, e, g, a, c, ab]) => {
       const h = bcrypt.hashSync('demo123', 10);
       db.run(`INSERT OR IGNORE INTO users VALUES
-              (NULL, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+              (NULL, ?, ?, ?, ?, ?, ?, ?, ?, '', 0)`,
         [u, e, h, g, a, c, ab, '']
       );
     });
@@ -97,7 +98,7 @@ function initDB() {
       const interestsStr = interests.slice(0, 3).join(', ');
 
       db.run(
-        `INSERT OR IGNORE INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+        `INSERT OR IGNORE INTO users VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, '', 0)`,
         [name, email, h, gender, age, city, about, interestsStr]
       );
     }
@@ -267,11 +268,21 @@ app.post('/api/profile/update', (req, res) => {
   );
 });
 
+app.post('/api/avatar/upload', (req, res) => {
+  if (!req.userId) return res.json({ success: false });
+  const { avatar } = req.body;
+  if (!avatar) return res.json({ success: false });
+  db.run('UPDATE users SET avatar = ? WHERE id = ?',
+    [avatar, req.userId],
+    () => res.json({ success: true })
+  );
+});
+
 app.get('/api/discover', (req, res) => {
   if (!req.userId) return res.json({ success: false, message: 'Требуется авторизация' });
 
   db.all(
-    'SELECT id, username, gender, age, city, about, interests FROM users WHERE id != ? LIMIT 50',
+    'SELECT id, username, gender, age, city, about, interests, avatar FROM users WHERE id != ? LIMIT 50',
     [req.userId],
     (err, profiles) => {
       if (err || !profiles) return res.json({ success: false });
@@ -309,7 +320,7 @@ app.get('/api/matches', (req, res) => {
   if (!req.userId) return res.json({ success: false });
 
   db.all(`
-    SELECT DISTINCT u.id, u.username, u.gender, u.age, u.city
+    SELECT DISTINCT u.id, u.username, u.gender, u.age, u.city, u.avatar
     FROM users u
     INNER JOIN likes l1 ON u.id = l1.to_id
     INNER JOIN likes l2 ON u.id = l2.from_id
