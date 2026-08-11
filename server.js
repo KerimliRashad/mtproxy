@@ -13,7 +13,7 @@ const db = new sqlite3.Database(process.env.NODE_ENV === 'production' ? './data.
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static(join(__dirname, 'public')));
 
 app.use(session({
   secret: 'lovematch-secret-2024-secure',
@@ -420,9 +420,16 @@ app.get('/api/admin/stats', requireAuth, (req, res) => {
   });
 });
 
+// Error handler для 404
+app.use((req, res) => {
+  console.log(`404: ${req.method} ${req.path}`);
+  res.status(404).json({ error: 'Not Found' });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🌟 LoveMatch запущен на http://localhost:${PORT}`);
   console.log(`📝 Демо: admin14 / admin123`);
-  console.log(`🌍 URL для общего доступа: https://yourdomain.com\n`);
+  console.log(`🌍 URL для общего доступа: https://yourdomain.com`);
+  console.log(`📁 Public folder: ${join(__dirname, 'public')}\n`);
 });
