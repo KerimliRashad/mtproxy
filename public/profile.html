@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профиль - LoveMatch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/discover" class="logo">💕 LoveMatch</a>
+      <div class="nav-links">
+        <span id="username" class="username"></span>
+        <a href="/discover" class="nav-item">🔍 Поиск</a>
+        <a href="/matches" class="nav-item">💑 Мэтчи</a>
+        <a href="/messages" class="nav-item">💬 Сообщения</a>
+        <a href="/api/logout" class="nav-item">Выход</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="profile-section">
+      <h1>👤 Мой профиль</h1>
+
+      <div class="profile-card">
+        <div class="profile-avatar-large">👤</div>
+
+        <div class="profile-form">
+          <div class="form-group">
+            <label>Имя пользователя</label>
+            <input type="text" id="username" disabled class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" disabled class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Возраст</label>
+            <input type="text" id="age" disabled class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Город</label>
+            <input type="text" id="city" disabled class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Обо мне</label>
+            <textarea id="about" class="form-input textarea" rows="4" placeholder="Расскажи о себе..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Интересы (через запятую)</label>
+            <input type="text" id="interests" class="form-input" placeholder="путешествия, кино, спорт">
+          </div>
+
+          <div class="form-group">
+            <label>Ищу</label>
+            <select id="looking_for" class="form-input">
+              <option value="отношения">Серьезные отношения</option>
+              <option value="дружба">Дружба</option>
+              <option value="встречи">Встречи</option>
+            </select>
+          </div>
+
+          <button id="saveBtn" class="btn btn-large">💾 Сохранить профиль</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .profile-section {
+      margin: 40px 0;
+    }
+
+    .profile-section h1 {
+      font-size: 32px;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .profile-card {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .profile-avatar-large {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      margin: 0 auto 40px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .profile-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .form-input {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-input:disabled {
+      background: #f5f5f5;
+      cursor: not-allowed;
+      color: #666;
+    }
+
+    .textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn-large {
+      padding: 14px;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .profile-card {
+        padding: 20px;
+      }
+    }
+  </style>
+
+  <script>
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/profile');
+        const data = await res.json();
+
+        if (data.success) {
+          const user = data.user;
+          document.getElementById('username').value = user.username;
+          document.getElementById('email').textContent = user.email || 'email@example.com';
+          document.getElementById('age').value = user.age;
+          document.getElementById('city').value = user.city;
+          document.getElementById('about').value = user.about || '';
+          document.getElementById('interests').value = user.interests || '';
+          document.getElementById('looking_for').value = user.looking_for || 'отношения';
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const about = document.getElementById('about').value;
+      const interests = document.getElementById('interests').value;
+      const looking_for = document.getElementById('looking_for').value;
+
+      try {
+        const res = await fetch('/api/profile/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ about, interests, looking_for })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert('✅ Профиль обновлен!');
+        }
+      } catch (error) {
+        console.error('Error updating profile:', error);
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

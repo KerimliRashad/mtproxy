@@ -14,57 +14,53 @@
       </div>
     </nav>
 
-    <div class="auth-box auth-box-large">
+    <div class="auth-box" style="max-width: 500px;">
       <h2>Создать профиль</h2>
 
       <div id="message" class="message"></div>
 
       <form id="registerForm">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="username">Имя пользователя</label>
-            <input type="text" id="username" name="username" required>
-          </div>
+        <div class="form-group">
+          <label for="username">Имя пользователя</label>
+          <input type="text" id="username" name="username" placeholder="Уникальное имя" required>
+        </div>
 
-          <div class="form-group">
-            <label for="email">Электронная почта</label>
-            <input type="email" id="email" name="email" required>
-          </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="твой@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Пароль</label>
+          <input type="password" id="password" name="password" placeholder="Минимум 6 символов" required>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="password">Пароль</label>
-            <input type="password" id="password" name="password" required>
-          </div>
-
-          <div class="form-group">
             <label for="gender">Пол</label>
             <select id="gender" name="gender" required>
-              <option value="">Выберите пол</option>
+              <option value="">Выбери пол</option>
               <option value="М">Мужчина</option>
               <option value="Ж">Женщина</option>
             </select>
           </div>
-        </div>
 
-        <div class="form-row">
           <div class="form-group">
             <label for="age">Возраст</label>
-            <input type="number" id="age" name="age" min="18" max="100" required>
-          </div>
-
-          <div class="form-group">
-            <label for="city">Город</label>
-            <input type="text" id="city" name="city" placeholder="Москва" required>
+            <input type="number" id="age" name="age" min="18" max="100" placeholder="25" required>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-full">Зарегистрироваться</button>
+        <div class="form-group">
+          <label for="city">Город</label>
+          <input type="text" id="city" name="city" placeholder="Москва" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-large">Зарегистрироваться</button>
       </form>
 
       <div class="auth-link">
-        Уже есть аккаунт? <a href="/login">Войти</a>
+        Уже есть аккаунт? <a href="/login">Войди сюда</a>
       </div>
     </div>
   </div>
@@ -81,6 +77,12 @@
       const city = document.getElementById('city').value;
       const messageEl = document.getElementById('message');
 
+      if (age < 18) {
+        messageEl.textContent = '❌ Минимальный возраст 18 лет';
+        messageEl.className = 'message error';
+        return;
+      }
+
       try {
         const response = await fetch('/api/register', {
           method: 'POST',
@@ -91,15 +93,15 @@
         const data = await response.json();
 
         if (data.success) {
-          messageEl.textContent = data.message;
+          messageEl.textContent = '✅ ' + data.message;
           messageEl.className = 'message success';
-          setTimeout(() => window.location.href = '/profiles', 1500);
+          setTimeout(() => window.location.href = '/discover', 1500);
         } else {
-          messageEl.textContent = data.message;
+          messageEl.textContent = '❌ ' + data.message;
           messageEl.className = 'message error';
         }
       } catch (error) {
-        messageEl.textContent = 'Ошибка подключения';
+        messageEl.textContent = '❌ Ошибка подключения';
         messageEl.className = 'message error';
       }
     });

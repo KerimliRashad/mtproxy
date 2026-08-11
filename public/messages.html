@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Сообщения - LoveMatch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/discover" class="logo">💕 LoveMatch</a>
+      <div class="nav-links">
+        <span id="username" class="username"></span>
+        <a href="/discover" class="nav-item">🔍 Поиск</a>
+        <a href="/matches" class="nav-item">💑 Мэтчи</a>
+        <a href="/profile" class="nav-item">👤 Профиль</a>
+        <a href="/api/logout" class="nav-item">Выход</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="messages-section">
+      <h1>💬 Сообщения</h1>
+
+      <div class="messages-container">
+        <div class="messages-list">
+          <div id="matchesList" class="matches-list">
+            <div class="loading">Загрузка мэтчей...</div>
+          </div>
+        </div>
+
+        <div class="messages-chat">
+          <div id="chatEmpty" class="chat-empty">
+            <div class="chat-empty-icon">💬</div>
+            <p>Выбери мэтч чтобы начать общение</p>
+          </div>
+
+          <div id="chatWindow" style="display:none;">
+            <div id="messagesWindow" class="messages-window">
+              <div class="loading">Загрузка сообщений...</div>
+            </div>
+
+            <form id="messageForm" class="message-input-form">
+              <input type="text" id="messageInput" placeholder="Напиши сообщение..." class="message-input">
+              <button type="submit" class="btn-send">Отправить</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .messages-section {
+      margin: 30px 0;
+    }
+
+    .messages-section h1 {
+      font-size: 32px;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .messages-container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+      height: 600px;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .messages-list {
+      border-right: 1px solid #eee;
+      overflow-y: auto;
+    }
+
+    .matches-list {
+      padding: 0;
+    }
+
+    .match-item {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .match-item:hover {
+      background: #f5f5f5;
+    }
+
+    .match-item.active {
+      background: #f0f0f0;
+      border-left: 4px solid #667eea;
+      padding-left: 11px;
+    }
+
+    .match-name {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .match-preview {
+      font-size: 12px;
+      color: #999;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .messages-chat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #999;
+    }
+
+    .chat-empty-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+
+    .messages-window {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      padding: 10px 15px;
+      border-radius: 8px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+
+    .message.sent {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      align-self: flex-end;
+    }
+
+    .message.received {
+      background: #f0f0f0;
+      color: #333;
+      align-self: flex-start;
+    }
+
+    .message-input-form {
+      display: flex;
+      gap: 10px;
+      padding: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .message-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn-send {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-send:hover {
+      opacity: 0.9;
+    }
+
+    @media (max-width: 900px) {
+      .messages-container {
+        grid-template-columns: 1fr;
+        height: 500px;
+      }
+
+      .messages-list {
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        max-height: 150px;
+      }
+    }
+  </style>
+
+  <script>
+    let currentChatUserId = null;
+    let currentMatches = [];
+
+    async function loadMatches() {
+      try {
+        const res = await fetch('/api/matches');
+        const data = await res.json();
+
+        if (data.success && data.matches.length > 0) {
+          currentMatches = data.matches;
+          const list = document.getElementById('matchesList');
+          list.innerHTML = currentMatches.map((m, i) => `
+            <div class="match-item ${i === 0 ? 'active' : ''}" onclick="selectMatch(${m.id}, this)">
+              <div class="match-name">${m.username}</div>
+              <div class="match-preview">${m.age} • ${m.city}</div>
+            </div>
+          `).join('');
+
+          if (currentMatches.length > 0) {
+            selectMatch(currentMatches[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading matches:', error);
+      }
+    }
+
+    function selectMatch(userId, element) {
+      currentChatUserId = userId;
+
+      document.querySelectorAll('.match-item').forEach(el => {
+        el.classList.remove('active');
+      });
+      if (element) element.classList.add('active');
+
+      document.getElementById('chatEmpty').style.display = 'none';
+      document.getElementById('chatWindow').style.display = 'flex';
+
+      loadMessages();
+    }
+
+    async function loadMessages() {
+      try {
+        const res = await fetch(`/api/messages/${currentChatUserId}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const window = document.getElementById('messagesWindow');
+          window.innerHTML = data.messages.map(msg => `
+            <div class="message ${msg.from_user_id === getCurrentUserId() ? 'sent' : 'received'}">
+              ${msg.message}
+            </div>
+          `).join('');
+
+          window.scrollTop = window.scrollHeight;
+        }
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      }
+    }
+
+    let myUserId = null;
+
+    async function loadCurrentUser() {
+      try {
+        const res = await fetch('/api/profile');
+        const data = await res.json();
+        if (data.success) {
+          myUserId = data.user.id;
+          document.getElementById('username').textContent = `👤 ${data.user.username}`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    function getCurrentUserId() {
+      return myUserId;
+    }
+
+    document.getElementById('messageForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+
+      if (!message) return;
+
+      try {
+        const res = await fetch(`/api/messages/${currentChatUserId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          input.value = '';
+          loadMessages();
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    });
+
+    loadCurrentUser();
+    loadMatches();
+  </script>
+</body>
+</html>

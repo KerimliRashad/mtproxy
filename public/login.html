@@ -21,8 +21,8 @@
 
       <form id="loginForm">
         <div class="form-group">
-          <label for="username">Имя пользователя</label>
-          <input type="text" id="username" name="username" required>
+          <label for="username">Имя пользователя или Email</label>
+          <input type="text" id="username" name="username" required autofocus>
         </div>
 
         <div class="form-group">
@@ -30,17 +30,16 @@
           <input type="password" id="password" name="password" required>
         </div>
 
-        <button type="submit" class="btn btn-full">Войти</button>
+        <button type="submit" class="btn btn-primary btn-large">Войти</button>
       </form>
 
       <div class="auth-link">
-        Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+        Нет аккаунта? <a href="/register">Создать новый</a>
       </div>
 
       <div class="demo-info">
         <strong>🔓 Демо вход:</strong><br>
-        Логин: admin14<br>
-        Пароль: admin123
+        admin14 / admin123
       </div>
     </div>
   </div>
@@ -63,15 +62,15 @@
         const data = await response.json();
 
         if (data.success) {
-          messageEl.textContent = data.message;
+          messageEl.textContent = '✅ ' + data.message;
           messageEl.className = 'message success';
-          setTimeout(() => window.location.href = '/profiles', 1500);
+          setTimeout(() => window.location.href = '/discover', 1500);
         } else {
-          messageEl.textContent = data.message;
+          messageEl.textContent = '❌ ' + data.message;
           messageEl.className = 'message error';
         }
       } catch (error) {
-        messageEl.textContent = 'Ошибка подключения';
+        messageEl.textContent = '❌ Ошибка подключения';
         messageEl.className = 'message error';
       }
     });

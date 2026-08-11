@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мэтчи - LoveMatch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/discover" class="logo">💕 LoveMatch</a>
+      <div class="nav-links">
+        <span id="username" class="username"></span>
+        <a href="/discover" class="nav-item">🔍 Поиск</a>
+        <a href="/messages" class="nav-item">💬 Сообщения</a>
+        <a href="/profile" class="nav-item">👤 Профиль</a>
+        <a href="/api/logout" class="nav-item">Выход</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="section">
+      <h1>💑 Мои мэтчи</h1>
+      <p class="section-desc">Люди, которым ты нравишься и которым нравишься ты</p>
+
+      <div class="matches-grid" id="matchesList">
+        <div class="loading">Загрузка мэтчей...</div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .section {
+      margin: 40px 0;
+    }
+
+    .section h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .section-desc {
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .matches-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .match-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .match-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .match-avatar {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+    }
+
+    .match-info {
+      padding: 15px;
+    }
+
+    .match-name {
+      font-weight: bold;
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .match-details {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .match-action {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .match-action:hover {
+      opacity: 0.9;
+    }
+
+    .loading {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+  </style>
+
+  <script>
+    async function loadMatches() {
+      try {
+        const res = await fetch('/api/matches');
+        const data = await res.json();
+
+        if (data.success) {
+          const list = document.getElementById('matchesList');
+
+          if (data.matches.length === 0) {
+            list.innerHTML = `
+              <div class="empty">
+                <div class="empty-icon">💔</div>
+                <p>У тебя пока нет мэтчей. Продолжи поиск!</p>
+              </div>
+            `;
+            return;
+          }
+
+          list.innerHTML = data.matches.map(match => `
+            <div class="match-card">
+              <div class="match-avatar">${match.gender === 'Ж' ? '👩' : '👨'}</div>
+              <div class="match-info">
+                <div class="match-name">${match.username}</div>
+                <div class="match-details">${match.age} • ${match.city}</div>
+                <button class="match-action" onclick="location.href='/messages?user=${match.id}'">
+                  💬 Написать
+                </button>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading matches:', error);
+      }
+    }
+
+    async function loadUsername() {
+      try {
+        const res = await fetch('/api/profile');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('username').textContent = `👤 ${data.user.username}`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    loadUsername();
+    loadMatches();
+  </script>
+</body>
+</html>

@@ -9,17 +9,19 @@
 <body>
   <nav class="navbar">
     <div class="container">
-      <div class="logo">💕 LoveMatch</div>
+      <a href="/discover" class="logo">💕 LoveMatch</a>
       <div class="nav-links">
-        <a href="/profiles" class="btn-nav">← Назад</a>
-        <a href="/api/logout" class="btn-nav">Выход</a>
+        <span style="opacity: 0.9;">⚙️ Админ панель</span>
+        <a href="/discover" class="nav-item">← Назад</a>
+        <a href="/api/logout" class="nav-item">Выход</a>
       </div>
     </div>
   </nav>
 
   <div class="container">
-    <div class="admin-panel">
-      <h2>⚙️ Панель администратора</h2>
+    <div style="margin: 40px 0;">
+      <h1 style="font-size: 32px; margin-bottom: 10px;">⚙️ Панель администратора</h1>
+      <p style="color: #666; margin-bottom: 30px;">Управление сайтом и статистика</p>
 
       <div class="stats-grid">
         <div class="stat-card">
@@ -30,107 +32,76 @@
           </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
           <div class="stat-icon">❤️</div>
           <div class="stat-info">
-            <div class="stat-label">Всего "нравится"</div>
+            <div class="stat-label">Всего лайков</div>
             <div class="stat-value" id="totalLikes">0</div>
           </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+          <div class="stat-icon">💑</div>
           <div class="stat-info">
-            <div class="stat-label">Средний возраст</div>
-            <div class="stat-value" id="avgAge">0</div>
+            <div class="stat-label">Всего мэтчей</div>
+            <div class="stat-value" id="totalMatches">0</div>
+          </div>
+        </div>
+
+        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+          <div class="stat-icon">💬</div>
+          <div class="stat-info">
+            <div class="stat-label">Сообщений</div>
+            <div class="stat-value" id="totalMessages">0</div>
           </div>
         </div>
       </div>
 
-      <div class="admin-info">
-        <h3>Информация о системе</h3>
-        <p>✅ База данных: активна</p>
-        <p>✅ Сервер: работает</p>
-        <p>✅ Аутентификация: включена</p>
-        <p>✅ Система безопасности: активна</p>
+      <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+        <h2 style="margin-bottom: 20px; color: #333;">📊 Система статуса</h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div style="padding: 15px; background: #f0f0f0; border-radius: 8px;">
+            <div style="color: #667eea; font-weight: bold; margin-bottom: 5px;">✅ Сервер</div>
+            <div style="color: #3c3; font-size: 14px;">Работает</div>
+          </div>
+          <div style="padding: 15px; background: #f0f0f0; border-radius: 8px;">
+            <div style="color: #667eea; font-weight: bold; margin-bottom: 5px;">✅ База данных</div>
+            <div style="color: #3c3; font-size: 14px;">Подключена</div>
+          </div>
+          <div style="padding: 15px; background: #f0f0f0; border-radius: 8px;">
+            <div style="color: #667eea; font-weight: bold; margin-bottom: 5px;">✅ Аутентификация</div>
+            <div style="color: #3c3; font-size: 14px;">Включена</div>
+          </div>
+          <div style="padding: 15px; background: #f0f0f0; border-radius: 8px;">
+            <div style="color: #667eea; font-weight: bold; margin-bottom: 5px;">✅ Алгоритм мэтчинга</div>
+            <div style="color: #3c3; font-size: 14px;">Активен</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+        <h2 style="margin-bottom: 20px; color: #333;">🚀 О системе</h2>
+        <ul style="list-style: none;">
+          <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+            <strong>🌐 Версия LoveMatch:</strong> 2.0 (Полная переделка)
+          </li>
+          <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+            <strong>⚙️ Технология:</strong> Node.js + Express + SQLite3
+          </li>
+          <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+            <strong>🔐 Безопасность:</strong> Bcrypt + Session Auth
+          </li>
+          <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+            <strong>🧠 Алгоритм:</strong> Умное сопоставление по совместимости
+          </li>
+          <li style="padding: 10px 0;">
+            <strong>📱 Адаптивность:</strong> Полная поддержка мобильных устройств
+          </li>
+        </ul>
       </div>
     </div>
   </div>
-
-  <style>
-    .admin-panel {
-      background: white;
-      border-radius: 12px;
-      padding: 30px;
-      margin: 30px 0;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .admin-panel h2 {
-      margin-bottom: 30px;
-      color: #333;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .stat-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 20px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-      transition: transform 0.3s;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-5px);
-    }
-
-    .stat-icon {
-      font-size: 40px;
-    }
-
-    .stat-info {
-      flex: 1;
-    }
-
-    .stat-label {
-      font-size: 13px;
-      opacity: 0.9;
-      margin-bottom: 5px;
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: bold;
-    }
-
-    .admin-info {
-      background: #f5f5f5;
-      padding: 20px;
-      border-radius: 12px;
-      border-left: 4px solid #667eea;
-    }
-
-    .admin-info h3 {
-      margin-top: 0;
-      color: #333;
-    }
-
-    .admin-info p {
-      margin: 10px 0;
-      color: #666;
-      font-size: 14px;
-    }
-  </style>
 
   <script>
     async function loadStats() {
@@ -141,7 +112,8 @@
         if (data.success) {
           document.getElementById('totalUsers').textContent = data.users;
           document.getElementById('totalLikes').textContent = data.likes;
-          document.getElementById('avgAge').textContent = Math.floor(Math.random() * 10 + 25);
+          document.getElementById('totalMatches').textContent = data.matches;
+          document.getElementById('totalMessages').textContent = data.messages;
         }
       } catch (error) {
         console.error('Error loading stats:', error);
