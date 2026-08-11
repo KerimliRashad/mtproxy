@@ -12,6 +12,9 @@
       <a href="/discover" class="logo">💕 LoveMatch</a>
       <div class="nav-links">
         <span id="username" class="username"></span>
+        <a href="/notifications" class="nav-item" style="position: relative;">
+          🔔 <span id="notifBadge" style="position: absolute; top: -8px; right: -8px; background: #ff4458; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; display: none;">0</span>
+        </a>
         <a href="/discover" class="nav-item">🔍 Поиск</a>
         <a href="/matches" class="nav-item">💑 Мэтчи</a>
         <a href="/messages" class="nav-item">💬 Сообщения</a>
@@ -233,7 +236,26 @@
       reader.readAsDataURL(file);
     });
 
+    async function updateNotifBadge() {
+      try {
+        const res = await fetch('/api/notifications', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+          const unread = data.notifications.filter(n => !n.read).length;
+          const badge = document.getElementById('notifBadge');
+          if (unread > 0) {
+            badge.textContent = unread;
+            badge.style.display = 'flex';
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
     loadProfile();
+    updateNotifBadge();
+    setInterval(updateNotifBadge, 5000);
   </script>
 </body>
 </html>
