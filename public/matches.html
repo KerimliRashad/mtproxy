@@ -147,9 +147,14 @@
             return;
           }
 
-          list.innerHTML = data.matches.map(match => `
+          list.innerHTML = data.matches.map(match => {
+            const emoji = match.gender === 'Ж' ? '👩' : '👨';
+            const avatar = match.avatar
+              ? `<img src="${match.avatar}" style="width: 100%; height: 100%; object-fit: cover;" />`
+              : `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 60px;">${emoji}</div>`;
+            return `
             <div class="match-card">
-              <div class="match-avatar">${match.gender === 'Ж' ? '👩' : '👨'}</div>
+              <div class="match-avatar">${avatar}</div>
               <div class="match-info">
                 <div class="match-name">${match.username}</div>
                 <div class="match-details">${match.age} • ${match.city}</div>
@@ -158,7 +163,8 @@
                 </button>
               </div>
             </div>
-          `).join('');
+          `;
+          }).join('');
         }
       } catch (error) {
         console.error('Error loading matches:', error);
