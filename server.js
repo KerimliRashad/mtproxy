@@ -264,30 +264,22 @@ app.post('/api/profile/update', (req, res) => {
 });
 
 app.get('/api/discover', (req, res) => {
-  if (!req.userId) return res.json({ success: false });
+  if (!req.userId) return res.json({ success: false, message: 'Требуется авторизация' });
 
-  db.get('SELECT age, gender, city FROM users WHERE id = ?', [req.userId], (err, currentUser) => {
-    if (!currentUser) return res.json({ success: false });
+  db.all(
+    'SELECT id, username, gender, age, city, about, interests FROM users WHERE id != ? LIMIT 50',
+    [req.userId],
+    (err, profiles) => {
+      if (err || !profiles) return res.json({ success: false });
 
-    db.all(
-      'SELECT id, username, gender, age, city, about, interests FROM users WHERE id != ? LIMIT 50',
-      [req.userId],
-      (err, profiles) => {
-        if (err || !profiles) return res.json({ success: false });
+      const profilesWithCompat = profiles.map(p => {
+        const compat = Math.floor(Math.random() * 40) + 60;
+        return { ...p, compatibility: compat };
+      });
 
-        const profilesWithCompat = profiles.map(p => {
-          let compat = 50;
-          if (p.gender !== currentUser.gender) compat += 20;
-          if (Math.abs(p.age - currentUser.age) <= 5) compat += 20;
-          if (p.city === currentUser.city) compat += 10;
-          compat = Math.min(100, compat + Math.floor(Math.random() * 20));
-          return { ...p, compatibility: compat };
-        });
-
-        res.json({ success: true, profiles: profilesWithCompat });
-      }
-    );
-  });
+      res.json({ success: true, profiles: profilesWithCompat });
+    }
+  );
 });
 
 app.post('/api/like/:id', (req, res) => {
